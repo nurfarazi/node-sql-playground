@@ -55,3 +55,9 @@ export async function createDatabase() {
 export async function checkDatabase() {
   return fetchJson<{ exists: boolean }>(`${API_BASE}/admin/db-exists`);
 }
+
+export async function createLearningPlatform() {
+  return fetchJson<{ ok: boolean }>(`${API_BASE}/admin/create-learning-platform`, {
+    method: "POST"
+  });
+}

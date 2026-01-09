@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { databaseExists, ensureDatabaseAndTable } from "../schema";
+import {
+  databaseExists,
+  ensureDatabaseAndTable,
+  ensureLearningPlatformSchema
+} from "../schema";
 
 const router = Router();
 
@@ -20,6 +24,16 @@ router.get("/db-exists", async (_req, res) => {
   } catch (error) {
     console.error("db-exists error:", error);
     res.status(500).json({ error: "Database check failed" });
+  }
+});
+
+router.post("/create-learning-platform", async (_req, res) => {
+  try {
+    await ensureLearningPlatformSchema();
+    res.json({ ok: true });
+  } catch (error) {
+    console.error("create-learning-platform error:", error);
+    res.status(500).json({ error: "Learning platform schema creation failed" });
   }
 });
 

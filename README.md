@@ -41,6 +41,7 @@ The API runs at `http://localhost:3015/api`.
 - `GET /api/health`
 - `POST /api/admin/create-db`
 - `GET /api/admin/db-exists`
+- `POST /api/admin/create-learning-platform`
 - `GET /api/users`
 - `GET /api/users/:id`
 - `POST /api/users`

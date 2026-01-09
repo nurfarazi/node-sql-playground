@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import {
   checkDatabase,
   createDatabase,
+  createLearningPlatform,
   createUser,
   deleteUser,
   fetchUsers,
@@ -79,6 +80,17 @@ export default function App() {
     }
   }
 
+  async function handleCreateLearningPlatform() {
+    setNotice(null);
+    setError(null);
+    try {
+      await createLearningPlatform();
+      setNotice("Learning platform schema ready.");
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setNotice(null);
@@ -151,26 +163,11 @@ export default function App() {
           <button className="button" onClick={handleCreateDb}>
             Create Database
           </button>
+          <button className="button ghost" onClick={handleCreateLearningPlatform}>
+            Create Learning Platform
+          </button>
         </div>
       </header>
-
-      <section className="panel status-panel">
-        <div className="status-text">
-          <p className="eyebrow">Database</p>
-          <h2>Status</h2>
-          <p className="muted">Uses DB_DATABASE from backend configuration.</p>
-        </div>
-        <div className="status-actions">
-          <button
-            className="button ghost"
-            onClick={handleCheckDb}
-            disabled={checkingDb}
-          >
-            {checkingDb ? "Checking..." : "Check Database"}
-          </button>
-          <span className={`pill ${statusClass}`}>{statusLabel}</span>
-        </div>
-      </section>
 
       <section className="panel">
         <h2>{editingId ? "Edit user" : "Add a new user"}</h2>
@@ -259,6 +256,28 @@ export default function App() {
           </div>
         )}
       </section>
+
+      <footer className="status-bar">
+        <div className="status-bar-inner">
+          <div className="status-block">
+            <span className="status-chip">DB</span>
+            <div>
+              <p className="status-title">Database status</p>
+              <p className="status-meta">Uses DB_DATABASE from backend config</p>
+            </div>
+            <span className={`pill ${statusClass}`}>{statusLabel}</span>
+          </div>
+          <div className="status-actions">
+            <button
+              className="button ghost"
+              onClick={handleCheckDb}
+              disabled={checkingDb}
+            >
+              {checkingDb ? "Checking..." : "Check Database"}
+            </button>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
