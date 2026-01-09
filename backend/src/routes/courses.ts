@@ -81,6 +81,13 @@ router.post("/", async (req, res) => {
 
   try {
     const pool = await getPool();
+    const categoryExists = await pool
+      .request()
+      .input("Id", sql.Int, categoryId)
+      .query("SELECT 1 AS ok FROM dbo.Categories WHERE Id = @Id");
+    if (categoryExists.recordset.length === 0) {
+      return res.status(400).json({ error: "Category not found" });
+    }
     const result = await pool
       .request()
       .input("CategoryId", sql.Int, categoryId)
@@ -119,6 +126,13 @@ router.put("/:id", async (req, res) => {
 
   try {
     const pool = await getPool();
+    const categoryExists = await pool
+      .request()
+      .input("Id", sql.Int, categoryId)
+      .query("SELECT 1 AS ok FROM dbo.Categories WHERE Id = @Id");
+    if (categoryExists.recordset.length === 0) {
+      return res.status(400).json({ error: "Category not found" });
+    }
     const result = await pool
       .request()
       .input("Id", sql.Int, id)

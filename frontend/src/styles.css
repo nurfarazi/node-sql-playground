@@ -87,6 +87,65 @@ body {
   gap: 16px;
 }
 
+.page.layout {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sidebar {
+  width: 220px;
+  padding: 16px;
+  border-radius: 18px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: sticky;
+  top: 24px;
+}
+
+.sidebar-title {
+  font-size: 11px;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.sidebar-tab {
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.sidebar-tab:hover {
+  color: var(--ink);
+  background: rgba(15, 93, 87, 0.08);
+}
+
+.sidebar-tab.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid rgba(15, 93, 87, 0.18);
+}
+
 .hero {
   display: flex;
   justify-content: space-between;
@@ -478,6 +537,15 @@ textarea:focus {
   .hero {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .page.layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    position: static;
   }
 
   .form {

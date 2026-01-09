@@ -1,4 +1,4 @@
-import { Course, Lesson, User } from "./types";
+import { Category, Course, Lesson, User } from "./types";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
 
@@ -22,6 +22,12 @@ type ApiUser = User & {
   FirstName?: string;
   LastName?: string;
   Email?: string;
+  CreatedAt?: string;
+};
+
+type ApiCategory = Category & {
+  Id?: number;
+  Name?: string;
   CreatedAt?: string;
 };
 
@@ -69,6 +75,14 @@ function normalizeUser(user: ApiUser): User {
     lastName: user.lastName ?? user.LastName ?? "",
     email: user.email ?? user.Email ?? "",
     createdAt: user.createdAt ?? user.CreatedAt ?? ""
+  };
+}
+
+function normalizeCategory(category: ApiCategory): Category {
+  return {
+    id: category.id ?? category.Id ?? 0,
+    name: category.name ?? category.Name ?? "",
+    createdAt: category.createdAt ?? category.CreatedAt ?? ""
   };
 }
 
@@ -125,6 +139,38 @@ export async function updateUser(
 
 export async function deleteUser(id: number) {
   await fetchJson(`${API_BASE}/users/${id}`, {
+    method: "DELETE"
+  });
+}
+
+export async function fetchCategories() {
+  const data = await fetchJson<ApiCategory[]>(`${API_BASE}/categories`);
+  return data.map(normalizeCategory);
+}
+
+export async function createCategory(payload: Omit<Category, "id" | "createdAt">) {
+  const data = await fetchJson<ApiCategory>(`${API_BASE}/categories`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  return normalizeCategory(data);
+}
+
+export async function updateCategory(
+  id: number,
+  payload: Omit<Category, "id" | "createdAt">
+) {
+  const data = await fetchJson<ApiCategory>(`${API_BASE}/categories/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  return normalizeCategory(data);
+}
+
+export async function deleteCategory(id: number) {
+  await fetchJson(`${API_BASE}/categories/${id}`, {
     method: "DELETE"
   });
 }

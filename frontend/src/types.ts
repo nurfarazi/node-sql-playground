@@ -6,6 +6,12 @@ export type User = {
   createdAt: string;
 };
 
+export type Category = {
+  id: number;
+  name: string;
+  createdAt: string;
+};
+
 export type Course = {
   id: number;
   categoryId: number;

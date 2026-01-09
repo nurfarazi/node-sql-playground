@@ -1,24 +1,32 @@
 import { useEffect, useState, type FormEvent } from "react";
 import {
+  createCategory,
   createCourse,
   createLesson,
   createUser,
+  deleteCategory,
   deleteCourse,
   deleteLesson,
   deleteUser,
+  fetchCategories,
   fetchCourses,
   fetchLessons,
   fetchUsers,
+  updateCategory,
   updateCourse,
   updateLesson,
   updateUser
 } from "./api";
-import { Course, Lesson, User } from "./types";
+import { Category, Course, Lesson, User } from "./types";
 
 const emptyUserForm = {
   firstName: "",
   lastName: "",
   email: ""
+};
+
+const emptyCategoryForm = {
+  name: ""
 };
 
 const emptyCourseForm = {
@@ -39,20 +47,26 @@ const emptyLessonForm = {
 export default function HomePage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
+  const [loadingCategories, setLoadingCategories] = useState(false);
   const [loadingLessons, setLoadingLessons] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [userForm, setUserForm] = useState(emptyUserForm);
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
+  const [categoryForm, setCategoryForm] = useState(emptyCategoryForm);
+  const [editingCategoryId, setEditingCategoryId] = useState<number | null>(
+    null
+  );
   const [courseForm, setCourseForm] = useState(emptyCourseForm);
   const [editingCourseId, setEditingCourseId] = useState<number | null>(null);
   const [lessonForm, setLessonForm] = useState(emptyLessonForm);
   const [editingLessonId, setEditingLessonId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<
-    "users" | "courses" | "lessons"
+    "users" | "categories" | "courses" | "lessons"
   >("courses");
 
   const fakeFirstNames = [
@@ -76,6 +90,46 @@ export default function HomePage() {
     "Brown"
   ];
   const fakeDomains = ["example.com", "mail.test", "demo.local"];
+  const fakeCourseTitles = [
+    "Intro to SQL",
+    "Data Modeling Basics",
+    "Query Optimization",
+    "Analytics with PostgreSQL",
+    "SQL for Product Teams",
+    "Advanced Joins",
+    "Reporting Essentials",
+    "Warehouse Foundations"
+  ];
+  const fakeCourseLevels = ["Beginner", "Intermediate", "Advanced"];
+  const fakeCourseStatuses: Array<Course["status"]> = [
+    "draft",
+    "published",
+    "archived"
+  ];
+  const fakeCourseDescriptions = [
+    "Build a solid foundation for writing and reading SQL queries.",
+    "Learn how to design schemas that scale as your data grows.",
+    "Improve query performance with practical, hands-on techniques.",
+    "Turn raw data into insights using real-world reporting flows.",
+    "Ship reliable dashboards and metrics with confidence."
+  ];
+  const fakeCategoryPrefixes = [
+    "Core",
+    "Advanced",
+    "Modern",
+    "Applied",
+    "Practical",
+    "Foundations"
+  ];
+  const fakeCategorySubjects = [
+    "Analytics",
+    "Reporting",
+    "Databases",
+    "Performance",
+    "Data Modeling",
+    "SQL",
+    "Warehousing"
+  ];
 
   function generateFakeUser() {
     const firstName =
@@ -91,6 +145,37 @@ export default function HomePage() {
     };
   }
 
+  function generateFakeCourse() {
+    const title =
+      fakeCourseTitles[Math.floor(Math.random() * fakeCourseTitles.length)];
+    const level =
+      fakeCourseLevels[Math.floor(Math.random() * fakeCourseLevels.length)];
+    const status =
+      fakeCourseStatuses[Math.floor(Math.random() * fakeCourseStatuses.length)];
+    const description =
+      fakeCourseDescriptions[
+        Math.floor(Math.random() * fakeCourseDescriptions.length)
+      ];
+    const categoryId = Math.floor(Math.random() * 5) + 1;
+    return {
+      categoryId: String(categoryId),
+      title,
+      description,
+      level,
+      status
+    };
+  }
+
+  function generateFakeCategory() {
+    const prefix =
+      fakeCategoryPrefixes[Math.floor(Math.random() * fakeCategoryPrefixes.length)];
+    const subject =
+      fakeCategorySubjects[Math.floor(Math.random() * fakeCategorySubjects.length)];
+    return {
+      name: `${prefix} ${subject}`
+    };
+  }
+
   async function loadUsers() {
     setLoadingUsers(true);
     setError(null);
@@ -101,6 +186,19 @@ export default function HomePage() {
       setError((err as Error).message);
     } finally {
       setLoadingUsers(false);
+    }
+  }
+
+  async function loadCategories() {
+    setLoadingCategories(true);
+    setError(null);
+    try {
+      const data = await fetchCategories();
+      setCategories(data);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoadingCategories(false);
     }
   }
 
@@ -132,6 +230,7 @@ export default function HomePage() {
 
   useEffect(() => {
     loadUsers();
+    loadCategories();
     loadCourses();
     loadLessons();
   }, []);
@@ -245,6 +344,75 @@ export default function HomePage() {
     setCourseForm(emptyCourseForm);
   }
 
+  function handleFillFakeCourse() {
+    const fakeCourse = generateFakeCourse();
+    if (categories.length > 0) {
+      const randomCategory =
+        categories[Math.floor(Math.random() * categories.length)];
+      fakeCourse.categoryId = String(randomCategory.id);
+    }
+    setCourseForm(fakeCourse);
+    setEditingCourseId(null);
+  }
+
+  async function handleCategorySubmit(event: FormEvent) {
+    event.preventDefault();
+    setNotice(null);
+    setError(null);
+    const name = categoryForm.name.trim();
+
+    if (!name) {
+      setError("Category requires a name.");
+      return;
+    }
+
+    try {
+      if (editingCategoryId) {
+        await updateCategory(editingCategoryId, { name });
+        setNotice("Category updated.");
+      } else {
+        await createCategory({ name });
+        setNotice("Category created.");
+      }
+      setCategoryForm(emptyCategoryForm);
+      setEditingCategoryId(null);
+      await loadCategories();
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
+  function handleEditCategory(category: Category) {
+    setEditingCategoryId(category.id);
+    setCategoryForm({ name: category.name });
+  }
+
+  function handleCancelCategory() {
+    setEditingCategoryId(null);
+    setCategoryForm(emptyCategoryForm);
+  }
+
+  function handleFillFakeCategory() {
+    const fakeCategory = generateFakeCategory();
+    setCategoryForm(fakeCategory);
+    setEditingCategoryId(null);
+  }
+
+  async function handleDeleteCategory(category: Category) {
+    if (!confirm(`Delete category "${category.name}"?`)) {
+      return;
+    }
+    setError(null);
+    setNotice(null);
+    try {
+      await deleteCategory(category.id);
+      setNotice("Category deleted.");
+      await loadCategories();
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
   async function handleDeleteCourse(course: Course) {
     if (!confirm(`Delete course "${course.title}"?`)) {
       return;
@@ -328,17 +496,11 @@ export default function HomePage() {
   }
 
   return (
-    <div className="page">
-      {(error || notice) && (
-        <div className="alerts">
-          {error && <div className="alert error">{error}</div>}
-          {notice && <div className="alert success">{notice}</div>}
-        </div>
-      )}
-
-      <nav className="tabs" role="tablist" aria-label="Manage entities">
+    <div className="page layout">
+      <aside className="sidebar" role="tablist" aria-label="Manage entities">
+        <div className="sidebar-title">Admin</div>
         <button
-          className={`tab ${activeTab === "users" ? "active" : ""}`}
+          className={`sidebar-tab ${activeTab === "users" ? "active" : ""}`}
           onClick={() => setActiveTab("users")}
           type="button"
           role="tab"
@@ -347,7 +509,7 @@ export default function HomePage() {
           Users
         </button>
         <button
-          className={`tab ${activeTab === "courses" ? "active" : ""}`}
+          className={`sidebar-tab ${activeTab === "courses" ? "active" : ""}`}
           onClick={() => setActiveTab("courses")}
           type="button"
           role="tab"
@@ -356,7 +518,16 @@ export default function HomePage() {
           Courses
         </button>
         <button
-          className={`tab ${activeTab === "lessons" ? "active" : ""}`}
+          className={`sidebar-tab ${activeTab === "categories" ? "active" : ""}`}
+          onClick={() => setActiveTab("categories")}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "categories"}
+        >
+          Categories
+        </button>
+        <button
+          className={`sidebar-tab ${activeTab === "lessons" ? "active" : ""}`}
           onClick={() => setActiveTab("lessons")}
           type="button"
           role="tab"
@@ -364,191 +535,319 @@ export default function HomePage() {
         >
           Lessons
         </button>
-      </nav>
+      </aside>
 
-      {activeTab === "users" && (
-        <section className="split-panel" role="tabpanel">
-          <div className="panel form-panel">
-            <h2>{editingUserId ? "Edit user" : "Add a user"}</h2>
-            <form className="form form-compact" onSubmit={handleUserSubmit}>
-              <label>
-                First name
-                <input
-                  value={userForm.firstName}
-                  onChange={(event) =>
-                    setUserForm({ ...userForm, firstName: event.target.value })
-                  }
-                  placeholder="Ada"
-                  required
-                />
-              </label>
-              <label>
-                Last name
-                <input
-                  value={userForm.lastName}
-                  onChange={(event) =>
-                    setUserForm({ ...userForm, lastName: event.target.value })
-                  }
-                  placeholder="Lovelace"
-                  required
-                />
-              </label>
-              <label>
-                Email
-                <input
-                  type="email"
-                  value={userForm.email}
-                  onChange={(event) =>
-                    setUserForm({ ...userForm, email: event.target.value })
-                  }
-                  placeholder="ada@example.com"
-                  required
-                />
-              </label>
-              <div className="form-actions">
-                <button className="button" type="submit">
-                  {editingUserId ? "Save changes" : "Create user"}
-                </button>
-                {!editingUserId && (
-                  <button
-                    className="button ghost"
-                    type="button"
-                    onClick={handleFillFakeUser}
-                  >
-                    Fake data
-                  </button>
-                )}
-                {editingUserId && (
-                  <button
-                    className="button ghost"
-                    type="button"
-                    onClick={handleCancelUser}
-                  >
-                    Cancel
-                  </button>
-                )}
-              </div>
-            </form>
+      <div className="content">
+        {(error || notice) && (
+          <div className="alerts">
+            {error && <div className="alert error">{error}</div>}
+            {notice && <div className="alert success">{notice}</div>}
           </div>
+        )}
 
-          <div className="panel table-panel">
-            <div className="table-header">
-              <h2>Users</h2>
-              <span className="count">{users.length} total</span>
+        {activeTab === "users" && (
+          <section className="split-panel" role="tabpanel">
+            <div className="panel form-panel">
+              <h2>{editingUserId ? "Edit user" : "Add a user"}</h2>
+              <form className="form form-compact" onSubmit={handleUserSubmit}>
+                <label>
+                  First name
+                  <input
+                    value={userForm.firstName}
+                    onChange={(event) =>
+                      setUserForm({ ...userForm, firstName: event.target.value })
+                    }
+                    placeholder="Ada"
+                    required
+                  />
+                </label>
+                <label>
+                  Last name
+                  <input
+                    value={userForm.lastName}
+                    onChange={(event) =>
+                      setUserForm({ ...userForm, lastName: event.target.value })
+                    }
+                    placeholder="Lovelace"
+                    required
+                  />
+                </label>
+                <label>
+                  Email
+                  <input
+                    type="email"
+                    value={userForm.email}
+                    onChange={(event) =>
+                      setUserForm({ ...userForm, email: event.target.value })
+                    }
+                    placeholder="ada@example.com"
+                    required
+                  />
+                </label>
+                <div className="form-actions">
+                  <button className="button" type="submit">
+                    {editingUserId ? "Save changes" : "Create user"}
+                  </button>
+                  {!editingUserId && (
+                    <button
+                      className="button ghost"
+                      type="button"
+                      onClick={handleFillFakeUser}
+                    >
+                      Fake data
+                    </button>
+                  )}
+                  {editingUserId && (
+                    <button
+                      className="button ghost"
+                      type="button"
+                      onClick={handleCancelUser}
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+              </form>
             </div>
 
-            {loadingUsers ? (
-              <p className="muted">Loading users...</p>
-            ) : users.length === 0 ? (
-              <p className="muted">No users yet. Create one on the left.</p>
-            ) : (
-              <div className="table">
-                <div className="table-row table-head">
-                  <span>Name</span>
-                  <span>Email</span>
-                  <span>Created</span>
-                  <span></span>
-                </div>
-                {users.map((user) => (
-                  <div className="table-row" key={user.id}>
-                    <div>
-                      <strong>
-                        {user.firstName} {user.lastName}
-                      </strong>
-                    </div>
-                    <div>{user.email}</div>
-                    <div>{new Date(user.createdAt).toLocaleDateString()}</div>
-                    <div className="row-actions">
-                      <button className="link" onClick={() => handleEditUser(user)}>
-                        Edit
-                      </button>
-                      <button
-                        className="link danger"
-                        onClick={() => handleDeleteUser(user)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                ))}
+            <div className="panel table-panel">
+              <div className="table-header">
+                <h2>Users</h2>
+                <span className="count">{users.length} total</span>
               </div>
-            )}
-          </div>
-        </section>
-      )}
+
+              {loadingUsers ? (
+                <p className="muted">Loading users...</p>
+              ) : users.length === 0 ? (
+                <p className="muted">No users yet. Create one on the left.</p>
+              ) : (
+                <div className="table">
+                  <div className="table-row table-head">
+                    <span>Name</span>
+                    <span>Email</span>
+                    <span>Created</span>
+                    <span></span>
+                  </div>
+                  {users.map((user) => (
+                    <div className="table-row" key={user.id}>
+                      <div>
+                        <strong>
+                          {user.firstName} {user.lastName}
+                        </strong>
+                      </div>
+                      <div>{user.email}</div>
+                      <div>{new Date(user.createdAt).toLocaleDateString()}</div>
+                      <div className="row-actions">
+                        <button
+                          className="link"
+                          onClick={() => handleEditUser(user)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="link danger"
+                          onClick={() => handleDeleteUser(user)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
       {activeTab === "courses" && (
         <section className="split-panel" role="tabpanel">
           <div className="panel form-panel">
             <h2>{editingCourseId ? "Edit course" : "Add a course"}</h2>
             <form className="form form-compact" onSubmit={handleCourseSubmit}>
+                <label>
+                  Category
+                  <select
+                    value={courseForm.categoryId}
+                    onChange={(event) =>
+                      setCourseForm({
+                        ...courseForm,
+                        categoryId: event.target.value
+                      })
+                    }
+                    required
+                    disabled={categories.length === 0}
+                  >
+                    <option value="">
+                      {categories.length === 0
+                        ? "No categories yet"
+                        : "Select a category"}
+                    </option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Title
+                  <input
+                    value={courseForm.title}
+                    onChange={(event) =>
+                      setCourseForm({ ...courseForm, title: event.target.value })
+                    }
+                    placeholder="Intro to SQL"
+                    required
+                  />
+                </label>
+                <label>
+                  Level
+                  <input
+                    value={courseForm.level}
+                    onChange={(event) =>
+                      setCourseForm({ ...courseForm, level: event.target.value })
+                    }
+                    placeholder="Beginner"
+                  />
+                </label>
+                <label className="field-span-3">
+                  Description
+                  <textarea
+                    value={courseForm.description}
+                    onChange={(event) =>
+                      setCourseForm({
+                        ...courseForm,
+                        description: event.target.value
+                      })
+                    }
+                    placeholder="Short summary of the course focus."
+                    rows={3}
+                  />
+                </label>
+                <label>
+                  Status
+                  <select
+                    value={courseForm.status}
+                    onChange={(event) =>
+                      setCourseForm({ ...courseForm, status: event.target.value })
+                    }
+                  >
+                    <option value="draft">Draft</option>
+                    <option value="published">Published</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </label>
+                <div className="form-actions">
+                  <button className="button" type="submit">
+                    {editingCourseId ? "Save course" : "Create course"}
+                  </button>
+                  {!editingCourseId && (
+                    <button
+                      className="button ghost"
+                      type="button"
+                      onClick={handleFillFakeCourse}
+                    >
+                      Fake data
+                    </button>
+                  )}
+                  {editingCourseId && (
+                    <button
+                      className="button ghost"
+                      type="button"
+                      onClick={handleCancelCourse}
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+              </form>
+            </div>
+
+            <div className="panel table-panel">
+              <div className="table-header">
+                <h2>Courses</h2>
+                <span className="count">{courses.length} total</span>
+              </div>
+
+              {loadingCourses ? (
+                <p className="muted">Loading courses...</p>
+              ) : courses.length === 0 ? (
+                <p className="muted">No courses yet. Create one on the left.</p>
+              ) : (
+                <div className="table">
+                  <div className="table-row table-head courses-row">
+                    <span>Title</span>
+                    <span>Category</span>
+                    <span>Status</span>
+                    <span>Level</span>
+                    <span>Created</span>
+                    <span></span>
+                  </div>
+                  {courses.map((course) => (
+                    <div className="table-row courses-row" key={course.id}>
+                      <div>
+                        <strong>{course.title}</strong>
+                      </div>
+                      <div>{course.categoryId}</div>
+                      <div>{course.status}</div>
+                      <div>{course.level ?? "—"}</div>
+                      <div>{new Date(course.createdAt).toLocaleDateString()}</div>
+                      <div className="row-actions">
+                        <button
+                          className="link"
+                          onClick={() => handleEditCourse(course)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="link danger"
+                          onClick={() => handleDeleteCourse(course)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {activeTab === "categories" && (
+        <section className="split-panel" role="tabpanel">
+          <div className="panel form-panel">
+            <h2>{editingCategoryId ? "Edit category" : "Add a category"}</h2>
+            <form className="form form-compact" onSubmit={handleCategorySubmit}>
               <label>
-                Category id
+                Name
                 <input
-                  type="number"
-                  min="1"
-                  value={courseForm.categoryId}
+                  value={categoryForm.name}
                   onChange={(event) =>
-                    setCourseForm({ ...courseForm, categoryId: event.target.value })
+                    setCategoryForm({ name: event.target.value })
                   }
-                  placeholder="1"
+                  placeholder="Analytics"
                   required
                 />
-              </label>
-              <label>
-                Title
-                <input
-                  value={courseForm.title}
-                  onChange={(event) =>
-                    setCourseForm({ ...courseForm, title: event.target.value })
-                  }
-                  placeholder="Intro to SQL"
-                  required
-                />
-              </label>
-              <label>
-                Level
-                <input
-                  value={courseForm.level}
-                  onChange={(event) =>
-                    setCourseForm({ ...courseForm, level: event.target.value })
-                  }
-                  placeholder="Beginner"
-                />
-              </label>
-              <label className="field-span-3">
-                Description
-                <textarea
-                  value={courseForm.description}
-                  onChange={(event) =>
-                    setCourseForm({ ...courseForm, description: event.target.value })
-                  }
-                  placeholder="Short summary of the course focus."
-                  rows={3}
-                />
-              </label>
-              <label>
-                Status
-                <select
-                  value={courseForm.status}
-                  onChange={(event) =>
-                    setCourseForm({ ...courseForm, status: event.target.value })
-                  }
-                >
-                  <option value="draft">Draft</option>
-                  <option value="published">Published</option>
-                  <option value="archived">Archived</option>
-                </select>
               </label>
               <div className="form-actions">
                 <button className="button" type="submit">
-                  {editingCourseId ? "Save course" : "Create course"}
+                  {editingCategoryId ? "Save category" : "Create category"}
                 </button>
-                {editingCourseId && (
+                {!editingCategoryId && (
                   <button
                     className="button ghost"
                     type="button"
-                    onClick={handleCancelCourse}
+                    onClick={handleFillFakeCategory}
+                  >
+                    Fake data
+                  </button>
+                )}
+                {editingCategoryId && (
+                  <button
+                    className="button ghost"
+                    type="button"
+                    onClick={handleCancelCategory}
                   >
                     Cancel
                   </button>
@@ -559,40 +858,37 @@ export default function HomePage() {
 
           <div className="panel table-panel">
             <div className="table-header">
-              <h2>Courses</h2>
-              <span className="count">{courses.length} total</span>
+              <h2>Categories</h2>
+              <span className="count">{categories.length} total</span>
             </div>
 
-            {loadingCourses ? (
-              <p className="muted">Loading courses...</p>
-            ) : courses.length === 0 ? (
-              <p className="muted">No courses yet. Create one on the left.</p>
+            {loadingCategories ? (
+              <p className="muted">Loading categories...</p>
+            ) : categories.length === 0 ? (
+              <p className="muted">No categories yet. Create one on the left.</p>
             ) : (
               <div className="table">
-                <div className="table-row table-head courses-row">
-                  <span>Title</span>
-                  <span>Category</span>
-                  <span>Status</span>
-                  <span>Level</span>
+                <div className="table-row table-head">
+                  <span>Name</span>
                   <span>Created</span>
                   <span></span>
                 </div>
-                {courses.map((course) => (
-                  <div className="table-row courses-row" key={course.id}>
+                {categories.map((category) => (
+                  <div className="table-row" key={category.id}>
                     <div>
-                      <strong>{course.title}</strong>
+                      <strong>{category.name}</strong>
                     </div>
-                    <div>{course.categoryId}</div>
-                    <div>{course.status}</div>
-                    <div>{course.level ?? "—"}</div>
-                    <div>{new Date(course.createdAt).toLocaleDateString()}</div>
+                    <div>{new Date(category.createdAt).toLocaleDateString()}</div>
                     <div className="row-actions">
-                      <button className="link" onClick={() => handleEditCourse(course)}>
+                      <button
+                        className="link"
+                        onClick={() => handleEditCategory(category)}
+                      >
                         Edit
                       </button>
                       <button
                         className="link danger"
-                        onClick={() => handleDeleteCourse(course)}
+                        onClick={() => handleDeleteCategory(category)}
                       >
                         Delete
                       </button>
@@ -719,6 +1015,7 @@ export default function HomePage() {
           </div>
         </section>
       )}
+      </div>
     </div>
   );
 }

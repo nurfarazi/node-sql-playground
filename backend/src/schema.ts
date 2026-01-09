@@ -140,6 +140,17 @@ export async function ensureLearningPlatformSchema() {
       )
     END
 
+    IF NOT EXISTS (SELECT 1 FROM dbo.Categories)
+    BEGIN
+      INSERT INTO dbo.Categories (Name)
+      VALUES
+        ('General'),
+        ('Analytics'),
+        ('Reporting'),
+        ('Data Modeling'),
+        ('Performance')
+    END
+
     IF OBJECT_ID('dbo.Courses', 'U') IS NULL
     BEGIN
       CREATE TABLE dbo.Courses (
