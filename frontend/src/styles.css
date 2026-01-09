@@ -194,6 +194,12 @@ h1 {
   box-shadow: var(--shadow);
 }
 
+.panel-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
 .panel h2 {
   margin: 0 0 16px;
   font-size: 22px;
@@ -213,7 +219,9 @@ label {
   font-weight: 600;
 }
 
-input {
+input,
+select,
+textarea {
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 12px 14px;
@@ -222,10 +230,20 @@ input {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-input:focus {
+textarea {
+  resize: vertical;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(15, 93, 87, 0.15);
+}
+
+.field-span-3 {
+  grid-column: span 3;
 }
 
 .form-actions {
@@ -271,6 +289,11 @@ input:focus {
   gap: 16px;
 }
 
+.alerts {
+  display: grid;
+  gap: 12px;
+}
+
 .table-header {
   display: flex;
   justify-content: space-between;
@@ -298,6 +321,14 @@ input:focus {
   gap: 12px;
   padding: 12px 0;
   border-bottom: 1px solid var(--line);
+}
+
+.table-row.courses-row {
+  grid-template-columns: 1.5fr 0.7fr 0.8fr 0.7fr 1fr 0.7fr;
+}
+
+.table-row.lessons-row {
+  grid-template-columns: 1.6fr 0.7fr 0.6fr 1fr 0.7fr;
 }
 
 .table-row:last-child {
@@ -369,6 +400,10 @@ input:focus {
   .form-actions {
     grid-column: span 1;
     justify-content: flex-start;
+  }
+
+  .field-span-3 {
+    grid-column: span 1;
   }
 
   .table-row {

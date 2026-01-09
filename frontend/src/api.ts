@@ -1,4 +1,4 @@
-import { User } from "./types";
+import { Course, Lesson, User } from "./types";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
 
@@ -59,5 +59,67 @@ export async function checkDatabase() {
 export async function createLearningPlatform() {
   return fetchJson<{ ok: boolean }>(`${API_BASE}/admin/create-learning-platform`, {
     method: "POST"
+  });
+}
+
+export async function fetchCourses() {
+  return fetchJson<Course[]>(`${API_BASE}/courses`);
+}
+
+export async function createCourse(
+  payload: Omit<Course, "id" | "createdAt" | "updatedAt">
+) {
+  return fetchJson<Course>(`${API_BASE}/courses`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function updateCourse(
+  id: number,
+  payload: Omit<Course, "id" | "createdAt" | "updatedAt">
+) {
+  return fetchJson<Course>(`${API_BASE}/courses/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function deleteCourse(id: number) {
+  await fetchJson(`${API_BASE}/courses/${id}`, {
+    method: "DELETE"
+  });
+}
+
+export async function fetchLessons() {
+  return fetchJson<Lesson[]>(`${API_BASE}/lessons`);
+}
+
+export async function createLesson(
+  payload: Omit<Lesson, "id" | "createdAt" | "updatedAt">
+) {
+  return fetchJson<Lesson>(`${API_BASE}/lessons`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function updateLesson(
+  id: number,
+  payload: Omit<Lesson, "id" | "createdAt" | "updatedAt">
+) {
+  return fetchJson<Lesson>(`${API_BASE}/lessons/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function deleteLesson(id: number) {
+  await fetchJson(`${API_BASE}/lessons/${id}`, {
+    method: "DELETE"
   });
 }

@@ -2,6 +2,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 import adminRouter from "./routes/admin";
+import coursesRouter from "./routes/courses";
+import lessonsRouter from "./routes/lessons";
 import usersRouter from "./routes/users";
 
 dotenv.config();
@@ -18,6 +20,8 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.use("/api/admin", adminRouter);
+app.use("/api/courses", coursesRouter);
+app.use("/api/lessons", lessonsRouter);
 app.use("/api/users", usersRouter);
 
 app.listen(port, () => {
