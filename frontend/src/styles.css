@@ -32,7 +32,6 @@ body {
 }
 
 .top-nav {
-  max-width: 1080px;
   margin: 0 auto;
   padding: 10px 18px;
   display: flex;
@@ -79,7 +78,6 @@ body {
 }
 
 .page {
-  max-width: 1080px;
   margin: 0 auto;
   padding: 20px 20px 80px;
   display: flex;
@@ -440,6 +438,18 @@ textarea:focus {
 
 .table-row.lessons-row {
   grid-template-columns: 1.6fr 0.7fr 0.6fr 1fr 0.7fr;
+}
+
+.table-row.enrollments-row {
+  grid-template-columns: 1.5fr 1.2fr 0.8fr 0.7fr 0.7fr;
+}
+
+.table-row.progress-row {
+  grid-template-columns: 1.6fr 1.4fr 0.7fr 0.9fr 0.7fr;
+}
+
+.table-row.completions-row {
+  grid-template-columns: 1.6fr 1.4fr 0.9fr;
 }
 
 .table-row:last-child {

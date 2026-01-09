@@ -2,22 +2,39 @@ import { useEffect, useState, type FormEvent } from "react";
 import {
   createCategory,
   createCourse,
+  createCourseProgress,
+  createEnrollment,
   createLesson,
   createUser,
   deleteCategory,
   deleteCourse,
+  deleteCourseProgress,
+  deleteEnrollment,
   deleteLesson,
   deleteUser,
   fetchCategories,
+  fetchCourseCompletions,
+  fetchCourseProgress,
   fetchCourses,
+  fetchEnrollments,
   fetchLessons,
   fetchUsers,
   updateCategory,
   updateCourse,
+  updateCourseProgress,
+  updateEnrollment,
   updateLesson,
   updateUser
 } from "./api";
-import { Category, Course, Lesson, User } from "./types";
+import {
+  Category,
+  Course,
+  CourseCompletion,
+  CourseProgress,
+  Enrollment,
+  Lesson,
+  User
+} from "./types";
 
 const emptyUserForm = {
   firstName: "",
@@ -44,15 +61,36 @@ const emptyLessonForm = {
   position: "1"
 };
 
+const emptyEnrollmentForm = {
+  userId: "",
+  courseId: "",
+  status: "active"
+};
+
+const emptyCourseProgressForm = {
+  userId: "",
+  courseId: "",
+  percentComplete: "0"
+};
+
 export default function HomePage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [courseProgress, setCourseProgress] = useState<CourseProgress[]>([]);
+  const [courseCompletions, setCourseCompletions] = useState<
+    CourseCompletion[]
+  >([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [loadingLessons, setLoadingLessons] = useState(false);
+  const [loadingEnrollments, setLoadingEnrollments] = useState(false);
+  const [loadingCourseProgress, setLoadingCourseProgress] = useState(false);
+  const [loadingCourseCompletions, setLoadingCourseCompletions] =
+    useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [userForm, setUserForm] = useState(emptyUserForm);
@@ -65,8 +103,24 @@ export default function HomePage() {
   const [editingCourseId, setEditingCourseId] = useState<number | null>(null);
   const [lessonForm, setLessonForm] = useState(emptyLessonForm);
   const [editingLessonId, setEditingLessonId] = useState<number | null>(null);
+  const [enrollmentForm, setEnrollmentForm] = useState(emptyEnrollmentForm);
+  const [editingEnrollmentId, setEditingEnrollmentId] = useState<number | null>(
+    null
+  );
+  const [courseProgressForm, setCourseProgressForm] = useState(
+    emptyCourseProgressForm
+  );
+  const [editingCourseProgressId, setEditingCourseProgressId] = useState<
+    number | null
+  >(null);
+  const [showActiveEnrollments, setShowActiveEnrollments] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    "users" | "categories" | "courses" | "lessons"
+    | "users"
+    | "categories"
+    | "courses"
+    | "lessons"
+    | "enrollments"
+    | "progress"
   >("courses");
 
   const fakeFirstNames = [
@@ -130,6 +184,7 @@ export default function HomePage() {
     "SQL",
     "Warehousing"
   ];
+  const enrollmentStatuses = ["active", "paused", "completed", "cancelled"];
 
   function generateFakeUser() {
     const firstName =
@@ -173,6 +228,35 @@ export default function HomePage() {
       fakeCategorySubjects[Math.floor(Math.random() * fakeCategorySubjects.length)];
     return {
       name: `${prefix} ${subject}`
+    };
+  }
+
+  function generateFakeEnrollment() {
+    if (users.length === 0 || courses.length === 0) {
+      return null;
+    }
+    const randomUser = users[Math.floor(Math.random() * users.length)];
+    const randomCourse = courses[Math.floor(Math.random() * courses.length)];
+    const status =
+      enrollmentStatuses[Math.floor(Math.random() * enrollmentStatuses.length)];
+    return {
+      userId: String(randomUser.id),
+      courseId: String(randomCourse.id),
+      status
+    };
+  }
+
+  function generateFakeCourseProgress() {
+    if (users.length === 0 || courses.length === 0) {
+      return null;
+    }
+    const randomUser = users[Math.floor(Math.random() * users.length)];
+    const randomCourse = courses[Math.floor(Math.random() * courses.length)];
+    const percentComplete = Math.floor(Math.random() * 101);
+    return {
+      userId: String(randomUser.id),
+      courseId: String(randomCourse.id),
+      percentComplete: String(percentComplete)
     };
   }
 
@@ -228,11 +312,53 @@ export default function HomePage() {
     }
   }
 
+  async function loadEnrollments(status?: string) {
+    setLoadingEnrollments(true);
+    setError(null);
+    try {
+      const data = await fetchEnrollments(status);
+      setEnrollments(data);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoadingEnrollments(false);
+    }
+  }
+
+  async function loadCourseProgress() {
+    setLoadingCourseProgress(true);
+    setError(null);
+    try {
+      const data = await fetchCourseProgress();
+      setCourseProgress(data);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoadingCourseProgress(false);
+    }
+  }
+
+  async function loadCourseCompletions() {
+    setLoadingCourseCompletions(true);
+    setError(null);
+    try {
+      const data = await fetchCourseCompletions();
+      setCourseCompletions(data);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoadingCourseCompletions(false);
+    }
+  }
+
   useEffect(() => {
     loadUsers();
     loadCategories();
     loadCourses();
     loadLessons();
+    loadEnrollments();
+    loadCourseProgress();
+    loadCourseCompletions();
   }, []);
 
 
@@ -495,6 +621,169 @@ export default function HomePage() {
     }
   }
 
+  async function handleEnrollmentSubmit(event: FormEvent) {
+    event.preventDefault();
+    setNotice(null);
+    setError(null);
+    const userId = Number(enrollmentForm.userId);
+    const courseId = Number(enrollmentForm.courseId);
+    const status = enrollmentForm.status;
+
+    if (!Number.isInteger(userId) || userId <= 0) {
+      setError("Enrollment requires a valid user.");
+      return;
+    }
+    if (!Number.isInteger(courseId) || courseId <= 0) {
+      setError("Enrollment requires a valid course.");
+      return;
+    }
+
+    const payload = { userId, courseId, status };
+
+    try {
+      if (editingEnrollmentId) {
+        await updateEnrollment(editingEnrollmentId, payload);
+        setNotice("Enrollment updated.");
+      } else {
+        await createEnrollment(payload);
+        setNotice("Enrollment created.");
+      }
+      setEnrollmentForm(emptyEnrollmentForm);
+      setEditingEnrollmentId(null);
+      await loadEnrollments(showActiveEnrollments ? "active" : undefined);
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
+  function handleEditEnrollment(enrollment: Enrollment) {
+    setEditingEnrollmentId(enrollment.id);
+    setEnrollmentForm({
+      userId: String(enrollment.userId),
+      courseId: String(enrollment.courseId),
+      status: enrollment.status
+    });
+  }
+
+  function handleCancelEnrollment() {
+    setEditingEnrollmentId(null);
+    setEnrollmentForm(emptyEnrollmentForm);
+  }
+
+  function handleFillFakeEnrollment() {
+    const fakeEnrollment = generateFakeEnrollment();
+    if (!fakeEnrollment) {
+      setError("Create at least one user and course before fake enrollments.");
+      return;
+    }
+    setEnrollmentForm(fakeEnrollment);
+    setEditingEnrollmentId(null);
+  }
+
+  async function handleDeleteEnrollment(enrollment: Enrollment) {
+    if (!confirm(`Delete enrollment for ${enrollment.userName}?`)) {
+      return;
+    }
+    setError(null);
+    setNotice(null);
+    try {
+      await deleteEnrollment(enrollment.id);
+      setNotice("Enrollment deleted.");
+      await loadEnrollments(showActiveEnrollments ? "active" : undefined);
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
+  async function handleToggleActiveEnrollments() {
+    const nextValue = !showActiveEnrollments;
+    setShowActiveEnrollments(nextValue);
+    await loadEnrollments(nextValue ? "active" : undefined);
+  }
+
+  async function handleCourseProgressSubmit(event: FormEvent) {
+    event.preventDefault();
+    setNotice(null);
+    setError(null);
+    const userId = Number(courseProgressForm.userId);
+    const courseId = Number(courseProgressForm.courseId);
+    const percentComplete = Number(courseProgressForm.percentComplete);
+
+    if (!Number.isInteger(userId) || userId <= 0) {
+      setError("Course progress requires a valid user.");
+      return;
+    }
+    if (!Number.isInteger(courseId) || courseId <= 0) {
+      setError("Course progress requires a valid course.");
+      return;
+    }
+    if (
+      !Number.isInteger(percentComplete) ||
+      percentComplete < 0 ||
+      percentComplete > 100
+    ) {
+      setError("Percent complete must be an integer between 0 and 100.");
+      return;
+    }
+
+    const payload = { userId, courseId, percentComplete };
+
+    try {
+      if (editingCourseProgressId) {
+        await updateCourseProgress(editingCourseProgressId, payload);
+        setNotice("Course progress updated.");
+      } else {
+        await createCourseProgress(payload);
+        setNotice("Course progress created.");
+      }
+      setCourseProgressForm(emptyCourseProgressForm);
+      setEditingCourseProgressId(null);
+      await loadCourseProgress();
+      await loadCourseCompletions();
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
+  function handleEditCourseProgress(progress: CourseProgress) {
+    setEditingCourseProgressId(progress.id);
+    setCourseProgressForm({
+      userId: String(progress.userId),
+      courseId: String(progress.courseId),
+      percentComplete: String(progress.percentComplete)
+    });
+  }
+
+  function handleCancelCourseProgress() {
+    setEditingCourseProgressId(null);
+    setCourseProgressForm(emptyCourseProgressForm);
+  }
+
+  function handleFillFakeCourseProgress() {
+    const fakeProgress = generateFakeCourseProgress();
+    if (!fakeProgress) {
+      setError("Create at least one user and course before fake progress.");
+      return;
+    }
+    setCourseProgressForm(fakeProgress);
+    setEditingCourseProgressId(null);
+  }
+
+  async function handleDeleteCourseProgress(progress: CourseProgress) {
+    if (!confirm(`Delete progress for ${progress.userName}?`)) {
+      return;
+    }
+    setError(null);
+    setNotice(null);
+    try {
+      await deleteCourseProgress(progress.id);
+      setNotice("Course progress deleted.");
+      await loadCourseProgress();
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
   return (
     <div className="page layout">
       <aside className="sidebar" role="tablist" aria-label="Manage entities">
@@ -534,6 +823,26 @@ export default function HomePage() {
           aria-selected={activeTab === "lessons"}
         >
           Lessons
+        </button>
+        <button
+          className={`sidebar-tab ${
+            activeTab === "enrollments" ? "active" : ""
+          }`}
+          onClick={() => setActiveTab("enrollments")}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "enrollments"}
+        >
+          Enrollments
+        </button>
+        <button
+          className={`sidebar-tab ${activeTab === "progress" ? "active" : ""}`}
+          onClick={() => setActiveTab("progress")}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "progress"}
+        >
+          Progress
         </button>
       </aside>
 
@@ -1012,6 +1321,376 @@ export default function HomePage() {
                 ))}
               </div>
             )}
+          </div>
+        </section>
+      )}
+
+      {activeTab === "enrollments" && (
+        <section className="split-panel" role="tabpanel">
+          <div className="panel form-panel">
+            <h2>{editingEnrollmentId ? "Edit enrollment" : "Add enrollment"}</h2>
+            <form className="form form-compact" onSubmit={handleEnrollmentSubmit}>
+              <label>
+                User
+                <select
+                  value={enrollmentForm.userId}
+                  onChange={(event) =>
+                    setEnrollmentForm({
+                      ...enrollmentForm,
+                      userId: event.target.value
+                    })
+                  }
+                  required
+                  disabled={users.length === 0}
+                >
+                  <option value="">
+                    {users.length === 0 ? "No users yet" : "Select a user"}
+                  </option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.firstName} {user.lastName} ({user.email})
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Course
+                <select
+                  value={enrollmentForm.courseId}
+                  onChange={(event) =>
+                    setEnrollmentForm({
+                      ...enrollmentForm,
+                      courseId: event.target.value
+                    })
+                  }
+                  required
+                  disabled={courses.length === 0}
+                >
+                  <option value="">
+                    {courses.length === 0 ? "No courses yet" : "Select a course"}
+                  </option>
+                  {courses.map((course) => (
+                    <option key={course.id} value={course.id}>
+                      {course.title}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Status
+                <select
+                  value={enrollmentForm.status}
+                  onChange={(event) =>
+                    setEnrollmentForm({
+                      ...enrollmentForm,
+                      status: event.target.value
+                    })
+                  }
+                >
+                  <option value="active">Active</option>
+                  <option value="paused">Paused</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </label>
+              <div className="form-actions">
+                <button className="button" type="submit">
+                  {editingEnrollmentId ? "Save enrollment" : "Create enrollment"}
+                </button>
+                {!editingEnrollmentId && (
+                  <button
+                    className="button ghost"
+                    type="button"
+                    onClick={handleFillFakeEnrollment}
+                  >
+                    Fake data
+                  </button>
+                )}
+                {editingEnrollmentId && (
+                  <button
+                    className="button ghost"
+                    type="button"
+                    onClick={handleCancelEnrollment}
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+
+          <div className="panel table-panel">
+            <div className="table-header">
+              <h2>Enrollments</h2>
+              <div className="table-actions">
+                <button
+                  className="button ghost"
+                  type="button"
+                  onClick={handleToggleActiveEnrollments}
+                  disabled={loadingEnrollments}
+                >
+                  {showActiveEnrollments ? "Show all" : "Show active only"}
+                </button>
+                <span className="count">{enrollments.length} total</span>
+              </div>
+            </div>
+
+            {loadingEnrollments ? (
+              <p className="muted">Loading enrollments...</p>
+            ) : enrollments.length === 0 ? (
+              <p className="muted">No enrollments yet. Create one on the left.</p>
+            ) : (
+              <div className="table">
+                <div className="table-row table-head enrollments-row">
+                  <span>User</span>
+                  <span>Course</span>
+                  <span>Status</span>
+                  <span>Enrolled</span>
+                  <span></span>
+                </div>
+                {enrollments.map((enrollment) => (
+                  <div className="table-row enrollments-row" key={enrollment.id}>
+                    <div>
+                      <strong>
+                        {enrollment.userName ||
+                          `User #${enrollment.userId}`}
+                      </strong>
+                      <div className="muted">{enrollment.userEmail}</div>
+                    </div>
+                    <div>
+                      {enrollment.courseTitle ||
+                        `Course #${enrollment.courseId}`}
+                    </div>
+                    <div>{enrollment.status}</div>
+                    <div>
+                      {enrollment.enrolledAt
+                        ? new Date(enrollment.enrolledAt).toLocaleDateString()
+                        : "—"}
+                    </div>
+                    <div className="row-actions">
+                      <button
+                        className="link"
+                        onClick={() => handleEditEnrollment(enrollment)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="link danger"
+                        onClick={() => handleDeleteEnrollment(enrollment)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {activeTab === "progress" && (
+        <section className="split-panel" role="tabpanel">
+          <div className="panel form-panel">
+            <h2>
+              {editingCourseProgressId ? "Edit progress" : "Set course progress"}
+            </h2>
+            <form
+              className="form form-compact"
+              onSubmit={handleCourseProgressSubmit}
+            >
+              <label>
+                User
+                <select
+                  value={courseProgressForm.userId}
+                  onChange={(event) =>
+                    setCourseProgressForm({
+                      ...courseProgressForm,
+                      userId: event.target.value
+                    })
+                  }
+                  required
+                  disabled={users.length === 0}
+                >
+                  <option value="">
+                    {users.length === 0 ? "No users yet" : "Select a user"}
+                  </option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.firstName} {user.lastName} ({user.email})
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Course
+                <select
+                  value={courseProgressForm.courseId}
+                  onChange={(event) =>
+                    setCourseProgressForm({
+                      ...courseProgressForm,
+                      courseId: event.target.value
+                    })
+                  }
+                  required
+                  disabled={courses.length === 0}
+                >
+                  <option value="">
+                    {courses.length === 0 ? "No courses yet" : "Select a course"}
+                  </option>
+                  {courses.map((course) => (
+                    <option key={course.id} value={course.id}>
+                      {course.title}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Percent complete
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={courseProgressForm.percentComplete}
+                  onChange={(event) =>
+                    setCourseProgressForm({
+                      ...courseProgressForm,
+                      percentComplete: event.target.value
+                    })
+                  }
+                  placeholder="0"
+                  required
+                />
+              </label>
+              <div className="form-actions">
+                <button className="button" type="submit">
+                  {editingCourseProgressId ? "Save progress" : "Set progress"}
+                </button>
+                {!editingCourseProgressId && (
+                  <button
+                    className="button ghost"
+                    type="button"
+                    onClick={handleFillFakeCourseProgress}
+                  >
+                    Fake data
+                  </button>
+                )}
+                {editingCourseProgressId && (
+                  <button
+                    className="button ghost"
+                    type="button"
+                    onClick={handleCancelCourseProgress}
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+
+          <div className="panel-stack">
+            <div className="panel table-panel">
+              <div className="table-header">
+                <h2>Course progress</h2>
+                <span className="count">{courseProgress.length} total</span>
+              </div>
+
+              {loadingCourseProgress ? (
+                <p className="muted">Loading progress...</p>
+              ) : courseProgress.length === 0 ? (
+                <p className="muted">
+                  No course progress yet. Set one on the left.
+                </p>
+              ) : (
+                <div className="table">
+                  <div className="table-row table-head progress-row">
+                    <span>User</span>
+                    <span>Course</span>
+                    <span>Percent</span>
+                    <span>Updated</span>
+                    <span></span>
+                  </div>
+                  {courseProgress.map((progress) => (
+                    <div className="table-row progress-row" key={progress.id}>
+                      <div>
+                        <strong>
+                          {progress.userName || `User #${progress.userId}`}
+                        </strong>
+                        <div className="muted">{progress.userEmail}</div>
+                      </div>
+                      <div>
+                        {progress.courseTitle || `Course #${progress.courseId}`}
+                      </div>
+                      <div>{progress.percentComplete}%</div>
+                      <div>
+                        {progress.updatedAt
+                          ? new Date(progress.updatedAt).toLocaleDateString()
+                          : "—"}
+                      </div>
+                      <div className="row-actions">
+                        <button
+                          className="link"
+                          onClick={() => handleEditCourseProgress(progress)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="link danger"
+                          onClick={() => handleDeleteCourseProgress(progress)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="panel table-panel">
+              <div className="table-header">
+                <h2>Course completions</h2>
+                <span className="count">{courseCompletions.length} total</span>
+              </div>
+
+              {loadingCourseCompletions ? (
+                <p className="muted">Loading completions...</p>
+              ) : courseCompletions.length === 0 ? (
+                <p className="muted">No course completions yet.</p>
+              ) : (
+                <div className="table">
+                  <div className="table-row table-head completions-row">
+                    <span>User</span>
+                    <span>Course</span>
+                    <span>Completed</span>
+                  </div>
+                  {courseCompletions.map((completion) => (
+                    <div
+                      className="table-row completions-row"
+                      key={completion.id}
+                    >
+                      <div>
+                        <strong>
+                          {completion.userName || `User #${completion.userId}`}
+                        </strong>
+                        <div className="muted">{completion.userEmail}</div>
+                      </div>
+                      <div>
+                        {completion.courseTitle ||
+                          `Course #${completion.courseId}`}
+                      </div>
+                      <div>
+                        {completion.completedAt
+                          ? new Date(
+                              completion.completedAt
+                            ).toLocaleDateString()
+                          : "—"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </section>
       )}

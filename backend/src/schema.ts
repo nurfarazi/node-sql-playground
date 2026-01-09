@@ -186,11 +186,60 @@ export async function ensureLearningPlatformSchema() {
         Id INT IDENTITY(1,1) PRIMARY KEY,
         UserId INT NOT NULL,
         CourseId INT NOT NULL,
+        Status NVARCHAR(40) NOT NULL DEFAULT 'active',
         EnrolledAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
         CONSTRAINT FK_Enrollments_Users FOREIGN KEY (UserId) REFERENCES dbo.Users(Id),
         CONSTRAINT FK_Enrollments_Courses FOREIGN KEY (CourseId) REFERENCES dbo.Courses(Id),
         CONSTRAINT UQ_Enrollments_UserCourse UNIQUE (UserId, CourseId)
       )
+    END
+    ELSE IF COL_LENGTH('dbo.Enrollments', 'Status') IS NULL
+    BEGIN
+      ALTER TABLE dbo.Enrollments
+      ADD Status NVARCHAR(40) NOT NULL
+        CONSTRAINT DF_Enrollments_Status DEFAULT 'active'
+    END
+
+    IF OBJECT_ID('dbo.ActiveEnrollments', 'V') IS NULL
+    BEGIN
+      EXEC('
+        CREATE VIEW dbo.ActiveEnrollments AS
+        SELECT
+          E.Id,
+          E.UserId,
+          U.FirstName AS UserFirstName,
+          U.LastName AS UserLastName,
+          U.Email AS UserEmail,
+          E.CourseId,
+          C.Title AS CourseTitle,
+          E.Status,
+          E.EnrolledAt
+        FROM dbo.Enrollments AS E
+        INNER JOIN dbo.Users AS U ON U.Id = E.UserId
+        INNER JOIN dbo.Courses AS C ON C.Id = E.CourseId
+        WHERE E.Status = ''active''
+      ')
+    END
+
+    IF OBJECT_ID('dbo.CancelledEnrollments', 'V') IS NULL
+    BEGIN
+      EXEC('
+        CREATE VIEW dbo.CancelledEnrollments AS
+        SELECT
+          E.Id,
+          E.UserId,
+          U.FirstName AS UserFirstName,
+          U.LastName AS UserLastName,
+          U.Email AS UserEmail,
+          E.CourseId,
+          C.Title AS CourseTitle,
+          E.Status,
+          E.EnrolledAt
+        FROM dbo.Enrollments AS E
+        INNER JOIN dbo.Users AS U ON U.Id = E.UserId
+        INNER JOIN dbo.Courses AS C ON C.Id = E.CourseId
+        WHERE E.Status = ''cancelled''
+      ')
     END
 
     IF OBJECT_ID('dbo.LessonProgress', 'U') IS NULL

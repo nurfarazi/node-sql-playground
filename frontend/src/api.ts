@@ -1,4 +1,12 @@
-import { Category, Course, Lesson, User } from "./types";
+import {
+  Category,
+  Course,
+  CourseCompletion,
+  CourseProgress,
+  Enrollment,
+  Lesson,
+  User
+} from "./types";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
 
@@ -50,6 +58,41 @@ type ApiLesson = Lesson & {
   Position?: number;
   CreatedAt?: string;
   UpdatedAt?: string | null;
+};
+
+type ApiEnrollment = Enrollment & {
+  Id?: number;
+  UserId?: number;
+  CourseId?: number;
+  UserFirstName?: string;
+  UserLastName?: string;
+  UserEmail?: string;
+  CourseTitle?: string;
+  Status?: string;
+  EnrolledAt?: string;
+};
+
+type ApiCourseProgress = CourseProgress & {
+  Id?: number;
+  UserId?: number;
+  CourseId?: number;
+  UserFirstName?: string;
+  UserLastName?: string;
+  UserEmail?: string;
+  CourseTitle?: string;
+  PercentComplete?: number;
+  UpdatedAt?: string;
+};
+
+type ApiCourseCompletion = CourseCompletion & {
+  Id?: number;
+  UserId?: number;
+  CourseId?: number;
+  UserFirstName?: string;
+  UserLastName?: string;
+  UserEmail?: string;
+  CourseTitle?: string;
+  CompletedAt?: string;
 };
 
 type TableCount = {
@@ -108,6 +151,58 @@ function normalizeLesson(lesson: ApiLesson): Lesson {
     position: lesson.position ?? lesson.Position ?? 1,
     createdAt: lesson.createdAt ?? lesson.CreatedAt ?? "",
     updatedAt: lesson.updatedAt ?? lesson.UpdatedAt ?? null
+  };
+}
+
+function normalizeEnrollment(enrollment: ApiEnrollment): Enrollment {
+  const firstName = enrollment.UserFirstName ?? "";
+  const lastName = enrollment.UserLastName ?? "";
+  const userName = enrollment.userName ?? `${firstName} ${lastName}`.trim();
+
+  return {
+    id: enrollment.id ?? enrollment.Id ?? 0,
+    userId: enrollment.userId ?? enrollment.UserId ?? 0,
+    courseId: enrollment.courseId ?? enrollment.CourseId ?? 0,
+    userName,
+    userEmail: enrollment.userEmail ?? enrollment.UserEmail ?? "",
+    courseTitle: enrollment.courseTitle ?? enrollment.CourseTitle ?? "",
+    status: enrollment.status ?? enrollment.Status ?? "active",
+    enrolledAt: enrollment.enrolledAt ?? enrollment.EnrolledAt ?? ""
+  };
+}
+
+function normalizeCourseProgress(progress: ApiCourseProgress): CourseProgress {
+  const firstName = progress.UserFirstName ?? "";
+  const lastName = progress.UserLastName ?? "";
+  const userName = progress.userName ?? `${firstName} ${lastName}`.trim();
+
+  return {
+    id: progress.id ?? progress.Id ?? 0,
+    userId: progress.userId ?? progress.UserId ?? 0,
+    courseId: progress.courseId ?? progress.CourseId ?? 0,
+    userName,
+    userEmail: progress.userEmail ?? progress.UserEmail ?? "",
+    courseTitle: progress.courseTitle ?? progress.CourseTitle ?? "",
+    percentComplete: progress.percentComplete ?? progress.PercentComplete ?? 0,
+    updatedAt: progress.updatedAt ?? progress.UpdatedAt ?? ""
+  };
+}
+
+function normalizeCourseCompletion(
+  completion: ApiCourseCompletion
+): CourseCompletion {
+  const firstName = completion.UserFirstName ?? "";
+  const lastName = completion.UserLastName ?? "";
+  const userName = completion.userName ?? `${firstName} ${lastName}`.trim();
+
+  return {
+    id: completion.id ?? completion.Id ?? 0,
+    userId: completion.userId ?? completion.UserId ?? 0,
+    courseId: completion.courseId ?? completion.CourseId ?? 0,
+    userName,
+    userEmail: completion.userEmail ?? completion.UserEmail ?? "",
+    courseTitle: completion.courseTitle ?? completion.CourseTitle ?? "",
+    completedAt: completion.completedAt ?? completion.CompletedAt ?? ""
   };
 }
 
@@ -265,4 +360,87 @@ export async function deleteLesson(id: number) {
   await fetchJson(`${API_BASE}/lessons/${id}`, {
     method: "DELETE"
   });
+}
+
+export async function fetchEnrollments(status?: string) {
+  const query = status ? `?status=${encodeURIComponent(status)}` : "";
+  const data = await fetchJson<ApiEnrollment[]>(
+    `${API_BASE}/enrollments${query}`
+  );
+  return data.map(normalizeEnrollment);
+}
+
+export async function createEnrollment(
+  payload: Pick<Enrollment, "userId" | "courseId" | "status">
+) {
+  const data = await fetchJson<ApiEnrollment>(`${API_BASE}/enrollments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  return normalizeEnrollment(data);
+}
+
+export async function updateEnrollment(
+  id: number,
+  payload: Pick<Enrollment, "userId" | "courseId" | "status">
+) {
+  const data = await fetchJson<ApiEnrollment>(`${API_BASE}/enrollments/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  return normalizeEnrollment(data);
+}
+
+export async function deleteEnrollment(id: number) {
+  await fetchJson(`${API_BASE}/enrollments/${id}`, {
+    method: "DELETE"
+  });
+}
+
+export async function fetchCourseProgress() {
+  const data = await fetchJson<ApiCourseProgress[]>(
+    `${API_BASE}/course-progress`
+  );
+  return data.map(normalizeCourseProgress);
+}
+
+export async function createCourseProgress(
+  payload: Pick<CourseProgress, "userId" | "courseId" | "percentComplete">
+) {
+  const data = await fetchJson<ApiCourseProgress>(`${API_BASE}/course-progress`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  return normalizeCourseProgress(data);
+}
+
+export async function updateCourseProgress(
+  id: number,
+  payload: Pick<CourseProgress, "userId" | "courseId" | "percentComplete">
+) {
+  const data = await fetchJson<ApiCourseProgress>(
+    `${API_BASE}/course-progress/${id}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    }
+  );
+  return normalizeCourseProgress(data);
+}
+
+export async function deleteCourseProgress(id: number) {
+  await fetchJson(`${API_BASE}/course-progress/${id}`, {
+    method: "DELETE"
+  });
+}
+
+export async function fetchCourseCompletions() {
+  const data = await fetchJson<ApiCourseCompletion[]>(
+    `${API_BASE}/course-completions`
+  );
+  return data.map(normalizeCourseCompletion);
 }

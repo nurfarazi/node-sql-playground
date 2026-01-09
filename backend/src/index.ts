@@ -3,7 +3,10 @@ import dotenv from "dotenv";
 import express from "express";
 import adminRouter from "./routes/admin";
 import categoriesRouter from "./routes/categories";
+import courseCompletionsRouter from "./routes/courseCompletions";
+import courseProgressRouter from "./routes/courseProgress";
 import coursesRouter from "./routes/courses";
+import enrollmentsRouter from "./routes/enrollments";
 import lessonsRouter from "./routes/lessons";
 import usersRouter from "./routes/users";
 
@@ -22,7 +25,10 @@ app.get("/api/health", (_req, res) => {
 
 app.use("/api/admin", adminRouter);
 app.use("/api/categories", categoriesRouter);
+app.use("/api/course-completions", courseCompletionsRouter);
+app.use("/api/course-progress", courseProgressRouter);
 app.use("/api/courses", coursesRouter);
+app.use("/api/enrollments", enrollmentsRouter);
 app.use("/api/lessons", lessonsRouter);
 app.use("/api/users", usersRouter);
 

@@ -32,3 +32,35 @@ export type Lesson = {
   createdAt: string;
   updatedAt: string | null;
 };
+
+export type Enrollment = {
+  id: number;
+  userId: number;
+  courseId: number;
+  userName: string;
+  userEmail: string;
+  courseTitle: string;
+  status: string;
+  enrolledAt: string;
+};
+
+export type CourseProgress = {
+  id: number;
+  userId: number;
+  courseId: number;
+  userName: string;
+  userEmail: string;
+  courseTitle: string;
+  percentComplete: number;
+  updatedAt: string;
+};
+
+export type CourseCompletion = {
+  id: number;
+  userId: number;
+  courseId: number;
+  userName: string;
+  userEmail: string;
+  courseTitle: string;
+  completedAt: string;
+};
