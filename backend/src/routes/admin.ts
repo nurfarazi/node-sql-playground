@@ -2,7 +2,8 @@ import { Router } from "express";
 import {
   databaseExists,
   ensureDatabaseAndTable,
-  ensureLearningPlatformSchema
+  ensureLearningPlatformSchema,
+  getLearningPlatformTableCounts
 } from "../schema";
 
 const router = Router();
@@ -34,6 +35,16 @@ router.post("/create-learning-platform", async (_req, res) => {
   } catch (error) {
     console.error("create-learning-platform error:", error);
     res.status(500).json({ error: "Learning platform schema creation failed" });
+  }
+});
+
+router.get("/table-counts", async (_req, res) => {
+  try {
+    const counts = await getLearningPlatformTableCounts();
+    res.json(counts);
+  } catch (error) {
+    console.error("table-counts error:", error);
+    res.status(500).json({ error: "Table counts failed" });
   }
 });
 

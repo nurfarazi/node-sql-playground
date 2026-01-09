@@ -1,10 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import {
-  checkDatabase,
-  createDatabase,
   createCourse,
   createLesson,
-  createLearningPlatform,
   createUser,
   deleteCourse,
   deleteLesson,
@@ -39,21 +36,13 @@ const emptyLessonForm = {
   position: "1"
 };
 
-interface HomePageProps {
-  onNavigateSettings?: () => void;
-}
-
-export default function HomePage({ onNavigateSettings }: HomePageProps) {
+export default function HomePage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
   const [loadingLessons, setLoadingLessons] = useState(false);
-  const [checkingDb, setCheckingDb] = useState(false);
-  const [dbStatus, setDbStatus] = useState<"unknown" | "exists" | "missing">(
-    "unknown"
-  );
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [userForm, setUserForm] = useState(emptyUserForm);
@@ -147,51 +136,6 @@ export default function HomePage({ onNavigateSettings }: HomePageProps) {
     loadLessons();
   }, []);
 
-  async function handleCreateDb() {
-    setNotice(null);
-    setError(null);
-    try {
-      await createDatabase();
-      setNotice("Database ready.");
-      setDbStatus("exists");
-    } catch (err) {
-      setError((err as Error).message);
-    }
-  }
-
-  async function handleCheckDb() {
-    setCheckingDb(true);
-    setNotice(null);
-    setError(null);
-    try {
-      const data = await checkDatabase();
-      if (data.exists) {
-        setDbStatus("exists");
-        setNotice("Database exists.");
-      } else {
-        setDbStatus("missing");
-        setNotice("Database not found.");
-      }
-    } catch (err) {
-      setDbStatus("unknown");
-      setError((err as Error).message);
-    } finally {
-      setCheckingDb(false);
-    }
-  }
-
-  async function handleCreateLearningPlatform() {
-    setNotice(null);
-    setError(null);
-    try {
-      await createLearningPlatform();
-      setNotice("Learning platform schema ready.");
-      await loadCourses();
-      await loadLessons();
-    } catch (err) {
-      setError((err as Error).message);
-    }
-  }
 
   async function handleUserSubmit(event: FormEvent) {
     event.preventDefault();
@@ -383,65 +327,8 @@ export default function HomePage({ onNavigateSettings }: HomePageProps) {
     }
   }
 
-  const statusLabel =
-    dbStatus === "exists"
-      ? "Database exists"
-      : dbStatus === "missing"
-        ? "Database missing"
-        : "Unknown status";
-  const statusClass =
-    dbStatus === "exists" ? "success" : dbStatus === "missing" ? "danger" : "neutral";
-
   return (
     <div className="page">
-      <header className="hero">
-        <div>
-          <p className="eyebrow">Node + MSSQL</p>
-          <h1>Learning Platform</h1>
-          <p className="subtitle">
-            Manage users, courses, and lessons in one place.
-          </p>
-        </div>
-        <div className="hero-actions">
-          {onNavigateSettings && (
-            <button
-              className="button icon-button"
-              onClick={onNavigateSettings}
-              title="Go to Settings"
-              aria-label="Settings"
-            >
-              ⚙️
-            </button>
-          )}
-          <button className="button" onClick={handleCreateDb}>
-            Create Database
-          </button>
-          <button className="button ghost" onClick={handleCreateLearningPlatform}>
-            Create Learning Platform
-          </button>
-        </div>
-      </header>
-
-      <section className="status-strip">
-        <div className="status-block">
-          <span className="status-chip">DB</span>
-          <div>
-            <p className="status-title">Database status</p>
-            <p className="status-meta">Uses DB_DATABASE from backend config</p>
-          </div>
-          <span className={`pill ${statusClass}`}>{statusLabel}</span>
-        </div>
-        <div className="status-actions">
-          <button
-            className="button ghost"
-            onClick={handleCheckDb}
-            disabled={checkingDb}
-          >
-            {checkingDb ? "Checking..." : "Check Database"}
-          </button>
-        </div>
-      </section>
-
       {(error || notice) && (
         <div className="alerts">
           {error && <div className="alert error">{error}</div>}

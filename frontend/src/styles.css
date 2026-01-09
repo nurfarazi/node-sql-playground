@@ -28,13 +28,13 @@ body {
 
 .app-shell {
   min-height: 100vh;
-  padding-top: 20px;
+  padding-top: 12px;
 }
 
 .top-nav {
   max-width: 1080px;
   margin: 0 auto;
-  padding: 14px 24px;
+  padding: 10px 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -55,13 +55,13 @@ body {
 
 .nav-actions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .nav-link {
   border: none;
   background: transparent;
-  padding: 8px 16px;
+  padding: 6px 12px;
   border-radius: 999px;
   font-weight: 600;
   color: var(--muted);
@@ -81,18 +81,18 @@ body {
 .page {
   max-width: 1080px;
   margin: 0 auto;
-  padding: 48px 24px 120px;
+  padding: 20px 20px 80px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
 }
 
 .hero {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  gap: 24px;
-  padding: 28px 32px;
+  gap: 16px;
+  padding: 20px 22px;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 24px;
@@ -123,7 +123,7 @@ h1 {
 
 .hero-actions {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -131,11 +131,11 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
-  padding: 14px 20px;
+  gap: 12px;
+  padding: 10px 14px;
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(15, 93, 87, 0.18);
-  border-radius: 18px;
+  border-radius: 14px;
   box-shadow: 0 10px 30px rgba(18, 18, 18, 0.08);
 }
 
@@ -201,15 +201,15 @@ h1 {
 .panel {
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 24px;
-  padding: 28px 32px;
+  border-radius: 18px;
+  padding: 18px 20px;
   box-shadow: var(--shadow);
 }
 
 .split-panel {
   display: grid;
   grid-template-columns: minmax(280px, 1fr) minmax(0, 2fr);
-  gap: 24px;
+  gap: 16px;
   align-items: start;
 }
 
@@ -226,14 +226,14 @@ h1 {
 }
 
 .panel h2 {
-  margin: 0 0 16px;
-  font-size: 22px;
+  margin: 0 0 12px;
+  font-size: 20px;
 }
 
 .form {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  gap: 12px;
 }
 
 .form.form-compact {
@@ -252,9 +252,9 @@ input,
 select,
 textarea {
   border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 12px 14px;
-  font-size: 15px;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
   font-family: inherit;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -278,9 +278,9 @@ textarea:focus {
 .form-actions {
   grid-column: span 3;
   display: flex;
-  gap: 12px;
+  gap: 8px;
   justify-content: flex-end;
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 .form.form-compact .form-actions {
@@ -295,7 +295,7 @@ textarea:focus {
 .button {
   border: none;
   border-radius: 999px;
-  padding: 12px 20px;
+  padding: 10px 16px;
   font-weight: 600;
   cursor: pointer;
   background: var(--accent);
@@ -322,24 +322,24 @@ textarea:focus {
 }
 
 .button.icon-button {
-  padding: 12px;
-  min-width: 44px;
-  min-height: 44px;
+  padding: 10px;
+  min-width: 40px;
+  min-height: 40px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 18px;
 }
 
 .table-panel {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .alerts {
   display: grid;
-  gap: 12px;
+  gap: 8px;
 }
 
 .table-header {
@@ -359,7 +359,7 @@ textarea:focus {
 .table {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .table-row {
@@ -367,8 +367,12 @@ textarea:focus {
   grid-template-columns: 1.4fr 1.4fr 1fr 0.7fr;
   align-items: center;
   gap: 12px;
-  padding: 12px 0;
+  padding: 8px 0;
   border-bottom: 1px solid var(--line);
+}
+
+.table-row.counts-row {
+  grid-template-columns: 1.4fr 0.7fr 0.7fr;
 }
 
 .table-row.courses-row {
@@ -392,7 +396,7 @@ textarea:focus {
 
 .row-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   justify-content: flex-end;
 }
 
@@ -410,7 +414,7 @@ textarea:focus {
 
 .alert {
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 10px 12px;
   font-size: 14px;
 }
 
@@ -432,9 +436,9 @@ textarea:focus {
 
 .tabs {
   display: flex;
-  gap: 12px;
-  padding: 4px;
-  border-radius: 16px;
+  gap: 8px;
+  padding: 3px;
+  border-radius: 12px;
   background: #f3f1ed;
   border: 1px solid var(--line);
 }
@@ -442,8 +446,8 @@ textarea:focus {
 .tab {
   border: none;
   background: transparent;
-  padding: 10px 18px;
-  border-radius: 12px;
+  padding: 8px 14px;
+  border-radius: 10px;
   font-weight: 600;
   color: var(--muted);
   cursor: pointer;

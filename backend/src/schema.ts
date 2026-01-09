@@ -1,4 +1,61 @@
-import { getDatabaseName, getPool } from "./db";
+import { getDatabaseName, getPool, sql } from "./db";
+
+const learningPlatformTables = [
+  "Users",
+  "Categories",
+  "Courses",
+  "Lessons",
+  "Enrollments",
+  "LessonProgress",
+  "CourseProgress",
+  "UserActivityLogs",
+  "CourseCompletions",
+  "Certificates",
+  "CourseReviews",
+  "CourseRatings",
+  "Instructors",
+  "CourseInstructors",
+  "Tags",
+  "CourseTags",
+  "Notifications",
+  "Announcements",
+  "AuditLogs"
+] as const;
+
+export type TableCount = {
+  name: string;
+  status: "ok" | "missing";
+  count?: number;
+};
+
+export async function getLearningPlatformTableCounts() {
+  const pool = await getPool();
+  const tables: TableCount[] = [];
+
+  for (const table of learningPlatformTables) {
+    const existsResult = await pool
+      .request()
+      .input("tableName", sql.NVarChar, table)
+      .query(
+        "SELECT 1 AS ok FROM sys.tables WHERE name = @tableName AND schema_id = SCHEMA_ID('dbo')"
+      );
+
+    if (existsResult.recordset.length === 0) {
+      tables.push({ name: table, status: "missing" });
+      continue;
+    }
+
+    const safeName = table.replace(/]/g, "]]");
+    const countResult = await pool
+      .request()
+      .query(`SELECT COUNT(*) AS count FROM dbo.[${safeName}]`);
+    const count = Number(countResult.recordset[0]?.count ?? 0);
+
+    tables.push({ name: table, status: "ok", count });
+  }
+
+  return { database: getDatabaseName(), tables };
+}
 
 export async function ensureDatabaseExists() {
   const database = getDatabaseName();

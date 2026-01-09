@@ -46,6 +46,17 @@ type ApiLesson = Lesson & {
   UpdatedAt?: string | null;
 };
 
+type TableCount = {
+  name: string;
+  status: "ok" | "missing";
+  count?: number;
+};
+
+type TableCountsResponse = {
+  database: string;
+  tables: TableCount[];
+};
+
 function normalizeUser(user: ApiUser): User {
   return {
     id: user.id ?? user.Id ?? 0,
@@ -127,6 +138,10 @@ export async function createLearningPlatform() {
   return fetchJson<{ ok: boolean }>(`${API_BASE}/admin/create-learning-platform`, {
     method: "POST"
   });
+}
+
+export async function fetchTableCounts() {
+  return fetchJson<TableCountsResponse>(`${API_BASE}/admin/table-counts`);
 }
 
 export async function fetchCourses() {

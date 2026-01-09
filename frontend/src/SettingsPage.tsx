@@ -1,134 +1,97 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState } from "react";
 import {
-  createUser,
-  deleteUser,
-  fetchUsers,
-  updateUser
+  checkDatabase,
+  createDatabase,
+  createLearningPlatform,
+  fetchTableCounts
 } from "./api";
-import { User } from "./types";
+import "./styles.css";
 
-const emptyForm = {
-  firstName: "",
-  lastName: "",
-  email: ""
+type TableCount = {
+  name: string;
+  status: "ok" | "missing";
+  count?: number;
 };
 
-const fakeFirstNames = [
-  "Ava",
-  "Noah",
-  "Maya",
-  "Leo",
-  "Zoe",
-  "Nina",
-  "Omar",
-  "Ezra"
-];
-const fakeLastNames = [
-  "Singh",
-  "Chen",
-  "Lopez",
-  "Patel",
-  "Kim",
-  "Garcia",
-  "Nguyen",
-  "Brown"
-];
-const fakeDomains = ["example.com", "mail.test", "demo.local"];
-
-interface SettingsPageProps {
-  onNavigateHome?: () => void;
-}
-
-export default function SettingsPage({ onNavigateHome }: SettingsPageProps) {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(false);
+export default function SettingsPage() {
+  const [checkingDb, setCheckingDb] = useState(false);
+  const [dbStatus, setDbStatus] = useState<"unknown" | "exists" | "missing">(
+    "unknown"
+  );
+  const [tableCounts, setTableCounts] = useState<TableCount[]>([]);
+  const [loadingCounts, setLoadingCounts] = useState(false);
+  const [countsFetched, setCountsFetched] = useState(false);
+  const [countsDatabase, setCountsDatabase] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [form, setForm] = useState(emptyForm);
-  const [editingId, setEditingId] = useState<number | null>(null);
 
-  function generateFakeUser() {
-    const firstName =
-      fakeFirstNames[Math.floor(Math.random() * fakeFirstNames.length)];
-    const lastName =
-      fakeLastNames[Math.floor(Math.random() * fakeLastNames.length)];
-    const domain = fakeDomains[Math.floor(Math.random() * fakeDomains.length)];
-    const suffix = Math.floor(Math.random() * 900 + 100);
-    return {
-      firstName,
-      lastName,
-      email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${suffix}@${domain}`
-    };
-  }
+  const statusLabel =
+    dbStatus === "exists"
+      ? "Database exists"
+      : dbStatus === "missing"
+        ? "Database missing"
+        : "Unknown status";
+  const statusClass =
+    dbStatus === "exists" ? "success" : dbStatus === "missing" ? "danger" : "neutral";
 
-  async function loadUsers() {
-    setLoading(true);
+  async function handleCreateDb() {
+    setNotice(null);
     setError(null);
     try {
-      const data = await fetchUsers();
-      setUsers(data);
+      await createDatabase();
+      setNotice("Database ready.");
+      setDbStatus("exists");
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
+  async function handleCheckDb() {
+    setCheckingDb(true);
+    setNotice(null);
+    setError(null);
+    try {
+      const data = await checkDatabase();
+      if (data.exists) {
+        setDbStatus("exists");
+        setNotice("Database exists.");
+      } else {
+        setDbStatus("missing");
+        setNotice("Database not found.");
+      }
+    } catch (err) {
+      setDbStatus("unknown");
+      setError((err as Error).message);
+    } finally {
+      setCheckingDb(false);
+    }
+  }
+
+  async function handleCreateLearningPlatform() {
+    setNotice(null);
+    setError(null);
+    try {
+      await createLearningPlatform();
+      setNotice("Learning platform schema ready.");
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
+  async function handleFetchTableCounts() {
+    setLoadingCounts(true);
+    setNotice(null);
+    setError(null);
+    try {
+      const data = await fetchTableCounts();
+      setTableCounts(data.tables);
+      setCountsDatabase(data.database);
+      setCountsFetched(true);
+      setNotice("Table counts loaded.");
     } catch (err) {
       setError((err as Error).message);
     } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-    setNotice(null);
-    setError(null);
-    try {
-      if (editingId) {
-        await updateUser(editingId, form);
-        setNotice("User updated.");
-      } else {
-        await createUser(form);
-        setNotice("User created.");
-      }
-      setForm(emptyForm);
-      setEditingId(null);
-      await loadUsers();
-    } catch (err) {
-      setError((err as Error).message);
-    }
-  }
-
-  function handleEdit(user: User) {
-    setEditingId(user.id);
-    setForm({
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email
-    });
-  }
-
-  function handleCancel() {
-    setEditingId(null);
-    setForm(emptyForm);
-  }
-
-  function handleFillFakeUser() {
-    const fakeUser = generateFakeUser();
-    setForm(fakeUser);
-  }
-
-  async function handleDelete(user: User) {
-    if (!confirm(`Delete ${user.firstName} ${user.lastName}?`)) {
-      return;
-    }
-    setError(null);
-    setNotice(null);
-    try {
-      await deleteUser(user.id);
-      setNotice("User deleted.");
-      await loadUsers();
-    } catch (err) {
-      setError((err as Error).message);
+      setLoadingCounts(false);
     }
   }
 
@@ -137,17 +100,40 @@ export default function SettingsPage({ onNavigateHome }: SettingsPageProps) {
       <header className="hero">
         <div>
           <p className="eyebrow">Node + MSSQL</p>
-          <h1>User Directory</h1>
+          <h1>Settings</h1>
           <p className="subtitle">
-            Basic CRUD with a white, airy interface. Manage users in real time.
+            Database setup and environment details live here.
           </p>
         </div>
         <div className="hero-actions">
-          <button className="button ghost" onClick={loadUsers} disabled={loading}>
-            Refresh
+          <button className="button" onClick={handleCreateDb}>
+            Create Database
+          </button>
+          <button className="button ghost" onClick={handleCreateLearningPlatform}>
+            Create Learning Platform
           </button>
         </div>
       </header>
+
+      <section className="status-strip">
+        <div className="status-block">
+          <span className="status-chip">DB</span>
+          <div>
+            <p className="status-title">Database status</p>
+            <p className="status-meta">Uses DB_DATABASE from backend config</p>
+          </div>
+          <span className={`pill ${statusClass}`}>{statusLabel}</span>
+        </div>
+        <div className="status-actions">
+          <button
+            className="button ghost"
+            onClick={handleCheckDb}
+            disabled={checkingDb}
+          >
+            {checkingDb ? "Checking..." : "Check Database"}
+          </button>
+        </div>
+      </section>
 
       {(error || notice) && (
         <div className="alerts">
@@ -156,106 +142,56 @@ export default function SettingsPage({ onNavigateHome }: SettingsPageProps) {
         </div>
       )}
 
-      <section className="split-panel" role="tabpanel">
-        <div className="panel form-panel">
-          <h2>{editingId ? "Edit user" : "Add a new user"}</h2>
-          <form className="form form-compact" onSubmit={handleSubmit}>
-            <label>
-              First name
-              <input
-                value={form.firstName}
-                onChange={(event) =>
-                  setForm({ ...form, firstName: event.target.value })
-                }
-                placeholder="Ada"
-                required
-              />
-            </label>
-            <label>
-              Last name
-              <input
-                value={form.lastName}
-                onChange={(event) =>
-                  setForm({ ...form, lastName: event.target.value })
-                }
-                placeholder="Lovelace"
-                required
-              />
-            </label>
-            <label>
-              Email
-              <input
-                type="email"
-                value={form.email}
-                onChange={(event) =>
-                  setForm({ ...form, email: event.target.value })
-                }
-                placeholder="ada@example.com"
-                required
-              />
-            </label>
-            <div className="form-actions">
-              <button className="button" type="submit">
-                {editingId ? "Save changes" : "Create user"}
-              </button>
-              {!editingId && (
-                <button
-                  className="button ghost"
-                  type="button"
-                  onClick={handleFillFakeUser}
-                >
-                  Fake data
-                </button>
-              )}
-              {editingId && (
-                <button className="button ghost" type="button" onClick={handleCancel}>
-                  Cancel
-                </button>
-              )}
-            </div>
-          </form>
-        </div>
-
-        <div className="panel table-panel">
-          <div className="table-header">
-            <h2>Users</h2>
-            <span className="count">{users.length} total</span>
+      <section className="panel">
+        <div className="table-header">
+          <div>
+            <h2>Table counts</h2>
+            <p className="status-meta">
+              Learning platform tables
+              {countsDatabase ? ` in ${countsDatabase}` : ""}
+            </p>
           </div>
-
-          {loading ? (
-            <p className="muted">Loading users...</p>
-          ) : users.length === 0 ? (
-            <p className="muted">No users yet. Create one on the left.</p>
-          ) : (
-            <div className="table">
-              <div className="table-row table-head">
-                <span>Name</span>
-                <span>Email</span>
-                <span>Created</span>
-                <span></span>
-              </div>
-              {users.map((user) => (
-                <div className="table-row" key={user.id}>
-                  <div>
-                    <strong>
-                      {user.firstName} {user.lastName}
-                    </strong>
-                  </div>
-                  <div>{user.email}</div>
-                  <div>{new Date(user.createdAt).toLocaleDateString()}</div>
-                  <div className="row-actions">
-                    <button className="link" onClick={() => handleEdit(user)}>
-                      Edit
-                    </button>
-                    <button className="link danger" onClick={() => handleDelete(user)}>
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <button
+            className="button ghost"
+            onClick={handleFetchTableCounts}
+            disabled={loadingCounts}
+          >
+            {loadingCounts ? "Loading..." : "Refresh counts"}
+          </button>
         </div>
+
+        {loadingCounts ? (
+          <p className="muted">Loading table counts...</p>
+        ) : !countsFetched ? (
+          <p className="muted">Load counts to see records per table.</p>
+        ) : tableCounts.length === 0 ? (
+          <p className="muted">No tables configured.</p>
+        ) : (
+          <div className="table">
+            <div className="table-row table-head counts-row">
+              <span>Table</span>
+              <span>Status</span>
+              <span>Count</span>
+            </div>
+            {tableCounts.map((table) => (
+              <div className="table-row counts-row" key={table.name}>
+                <div>
+                  <strong>{table.name}</strong>
+                </div>
+                <div>
+                  <span
+                    className={`pill ${
+                      table.status === "ok" ? "success" : "danger"
+                    }`}
+                  >
+                    {table.status === "ok" ? "ok" : "missing"}
+                  </span>
+                </div>
+                <div>{table.status === "ok" ? table.count ?? 0 : "—"}</div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );
