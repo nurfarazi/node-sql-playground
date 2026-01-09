@@ -3,7 +3,8 @@ import {
   checkDatabase,
   createDatabase,
   createLearningPlatform,
-  fetchTableCounts
+  fetchTableCounts,
+  fetchViewCount
 } from "./api";
 import "./styles.css";
 
@@ -22,6 +23,9 @@ export default function SettingsPage() {
   const [loadingCounts, setLoadingCounts] = useState(false);
   const [countsFetched, setCountsFetched] = useState(false);
   const [countsDatabase, setCountsDatabase] = useState<string | null>(null);
+  const [viewCount, setViewCount] = useState<number | null>(null);
+  const [viewDatabase, setViewDatabase] = useState<string | null>(null);
+  const [loadingViews, setLoadingViews] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -95,6 +99,22 @@ export default function SettingsPage() {
     }
   }
 
+  async function handleFetchViewCount() {
+    setLoadingViews(true);
+    setNotice(null);
+    setError(null);
+    try {
+      const data = await fetchViewCount();
+      setViewCount(data.count);
+      setViewDatabase(data.database);
+      setNotice("View count loaded.");
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoadingViews(false);
+    }
+  }
+
   return (
     <div className="page">
       <header className="hero">
@@ -141,6 +161,42 @@ export default function SettingsPage() {
           {notice && <div className="alert success">{notice}</div>}
         </div>
       )}
+
+      <section className="panel">
+        <div className="table-header">
+          <div>
+            <h2>Views</h2>
+            <p className="status-meta">
+              dbo views
+              {viewDatabase ? ` in ${viewDatabase}` : ""}
+            </p>
+          </div>
+          <button
+            className="button ghost"
+            onClick={handleFetchViewCount}
+            disabled={loadingViews}
+          >
+            {loadingViews ? "Loading..." : "Refresh views"}
+          </button>
+        </div>
+
+        {loadingViews ? (
+          <p className="muted">Loading view count...</p>
+        ) : viewCount === null ? (
+          <p className="muted">Load to see how many dbo views exist.</p>
+        ) : (
+          <div className="status-strip">
+            <div className="status-block">
+              <span className="status-chip">VW</span>
+              <div>
+                <p className="status-title">Total dbo views</p>
+                <p className="status-meta">Count of views in schema dbo</p>
+              </div>
+              <span className="pill neutral">{viewCount}</span>
+            </div>
+          </div>
+        )}
+      </section>
 
       <section className="panel">
         <div className="table-header">

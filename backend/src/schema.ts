@@ -57,6 +57,17 @@ export async function getLearningPlatformTableCounts() {
   return { database: getDatabaseName(), tables };
 }
 
+export async function getDboViewCount() {
+  const pool = await getPool();
+  const result = await pool
+    .request()
+    .query(
+      "SELECT COUNT(*) AS count FROM sys.views WHERE schema_id = SCHEMA_ID('dbo')"
+    );
+  const count = Number(result.recordset[0]?.count ?? 0);
+  return { database: getDatabaseName(), count };
+}
+
 export async function ensureDatabaseExists() {
   const database = getDatabaseName();
   const masterPool = await getPool("master");

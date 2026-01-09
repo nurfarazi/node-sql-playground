@@ -57,6 +57,11 @@ type TableCountsResponse = {
   tables: TableCount[];
 };
 
+type ViewCountResponse = {
+  database: string;
+  count: number;
+};
+
 function normalizeUser(user: ApiUser): User {
   return {
     id: user.id ?? user.Id ?? 0,
@@ -142,6 +147,10 @@ export async function createLearningPlatform() {
 
 export async function fetchTableCounts() {
   return fetchJson<TableCountsResponse>(`${API_BASE}/admin/table-counts`);
+}
+
+export async function fetchViewCount() {
+  return fetchJson<ViewCountResponse>(`${API_BASE}/admin/view-count`);
 }
 
 export async function fetchCourses() {

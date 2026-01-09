@@ -3,7 +3,8 @@ import {
   databaseExists,
   ensureDatabaseAndTable,
   ensureLearningPlatformSchema,
-  getLearningPlatformTableCounts
+  getLearningPlatformTableCounts,
+  getDboViewCount
 } from "../schema";
 
 const router = Router();
@@ -45,6 +46,16 @@ router.get("/table-counts", async (_req, res) => {
   } catch (error) {
     console.error("table-counts error:", error);
     res.status(500).json({ error: "Table counts failed" });
+  }
+});
+
+router.get("/view-count", async (_req, res) => {
+  try {
+    const viewCount = await getDboViewCount();
+    res.json(viewCount);
+  } catch (error) {
+    console.error("view-count error:", error);
+    res.status(500).json({ error: "View count failed" });
   }
 });
 
