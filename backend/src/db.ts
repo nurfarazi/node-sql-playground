@@ -30,6 +30,13 @@ export function getDatabaseName() {
 }
 
 function buildConfig(database: string): sql.config {
+  const odbcDriver = process.env.ODBC_DRIVER?.trim();
+  if (odbcDriver) {
+    return {
+      driver: "msnodesqlv8",
+      connectionString: `Driver={${odbcDriver}};Server=${getServerName()};Database=${database};Trusted_Connection=Yes;TrustServerCertificate=Yes;`
+    };
+  }
   return {
     server: getServerName(),
     database,

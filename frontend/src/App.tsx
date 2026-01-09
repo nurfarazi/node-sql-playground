@@ -1,5 +1,12 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { createDatabase, createUser, deleteUser, fetchUsers, updateUser } from "./api";
+import {
+  checkDatabase,
+  createDatabase,
+  createUser,
+  deleteUser,
+  fetchUsers,
+  updateUser
+} from "./api";
 import { User } from "./types";
 import "./styles.css";
 
@@ -12,6 +19,10 @@ const emptyForm = {
 export default function App() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
+  const [checkingDb, setCheckingDb] = useState(false);
+  const [dbStatus, setDbStatus] = useState<"unknown" | "exists" | "missing">(
+    "unknown"
+  );
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -40,9 +51,31 @@ export default function App() {
     try {
       await createDatabase();
       setNotice("Database ready.");
+      setDbStatus("exists");
       await loadUsers();
     } catch (err) {
       setError((err as Error).message);
+    }
+  }
+
+  async function handleCheckDb() {
+    setCheckingDb(true);
+    setNotice(null);
+    setError(null);
+    try {
+      const data = await checkDatabase();
+      if (data.exists) {
+        setDbStatus("exists");
+        setNotice("Database exists.");
+      } else {
+        setDbStatus("missing");
+        setNotice("Database not found.");
+      }
+    } catch (err) {
+      setDbStatus("unknown");
+      setError((err as Error).message);
+    } finally {
+      setCheckingDb(false);
     }
   }
 
@@ -91,6 +124,15 @@ export default function App() {
     }
   }
 
+  const statusLabel =
+    dbStatus === "exists"
+      ? "Database exists"
+      : dbStatus === "missing"
+        ? "Database missing"
+        : "Unknown status";
+  const statusClass =
+    dbStatus === "exists" ? "success" : dbStatus === "missing" ? "danger" : "neutral";
+
   return (
     <div className="page">
       <header className="hero">
@@ -111,6 +153,24 @@ export default function App() {
           </button>
         </div>
       </header>
+
+      <section className="panel status-panel">
+        <div className="status-text">
+          <p className="eyebrow">Database</p>
+          <h2>Status</h2>
+          <p className="muted">Uses DB_DATABASE from backend configuration.</p>
+        </div>
+        <div className="status-actions">
+          <button
+            className="button ghost"
+            onClick={handleCheckDb}
+            disabled={checkingDb}
+          >
+            {checkingDb ? "Checking..." : "Check Database"}
+          </button>
+          <span className={`pill ${statusClass}`}>{statusLabel}</span>
+        </div>
+      </section>
 
       <section className="panel">
         <h2>{editingId ? "Edit user" : "Add a new user"}</h2>

@@ -51,3 +51,7 @@ export async function createDatabase() {
     method: "POST"
   });
 }
+
+export async function checkDatabase() {
+  return fetchJson<{ exists: boolean }>(`${API_BASE}/admin/db-exists`);
+}

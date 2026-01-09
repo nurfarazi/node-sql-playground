@@ -13,6 +13,21 @@ export async function ensureDatabaseExists() {
   `);
 }
 
+export async function databaseExists() {
+  try {
+    const pool = await getPool();
+    await pool.request().query("SELECT 1 AS ok");
+    return true;
+  } catch (error) {
+    const number = (error as { number?: number })?.number;
+    const message = (error as Error)?.message ?? "";
+    if (number === 4060 || message.includes("Cannot open database")) {
+      return false;
+    }
+    throw error;
+  }
+}
+
 export async function ensureUsersTableExists() {
   const pool = await getPool();
 
