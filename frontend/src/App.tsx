@@ -9,13 +9,32 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>("home");
 
   return (
-    <>
+    <div className="app-shell">
+      <nav className="top-nav">
+        <div className="nav-brand">Node + MSSQL</div>
+        <div className="nav-actions">
+          <button
+            className={`nav-link ${currentPage === "home" ? "active" : ""}`}
+            onClick={() => setCurrentPage("home")}
+            type="button"
+          >
+            Home
+          </button>
+          <button
+            className={`nav-link ${currentPage === "settings" ? "active" : ""}`}
+            onClick={() => setCurrentPage("settings")}
+            type="button"
+          >
+            Settings
+          </button>
+        </div>
+      </nav>
       {currentPage === "home" && (
-        <HomePage onNavigateSettings={() => setCurrentPage("settings")} />
+        <HomePage />
       )}
       {currentPage === "settings" && (
-        <SettingsPage onNavigateHome={() => setCurrentPage("home")} />
+        <SettingsPage />
       )}
-    </>
+    </div>
   );
 }

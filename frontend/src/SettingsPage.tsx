@@ -36,7 +36,7 @@ const fakeLastNames = [
 const fakeDomains = ["example.com", "mail.test", "demo.local"];
 
 interface SettingsPageProps {
-  onNavigateHome: () => void;
+  onNavigateHome?: () => void;
 }
 
 export default function SettingsPage({ onNavigateHome }: SettingsPageProps) {
@@ -136,9 +136,6 @@ export default function SettingsPage({ onNavigateHome }: SettingsPageProps) {
     <div className="page">
       <header className="hero">
         <div>
-          <button className="link" onClick={onNavigateHome} style={{ marginBottom: "1rem" }}>
-            ← Back to Home
-          </button>
           <p className="eyebrow">Node + MSSQL</p>
           <h1>User Directory</h1>
           <p className="subtitle">

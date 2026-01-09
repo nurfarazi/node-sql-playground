@@ -1,18 +1,28 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import {
   checkDatabase,
   createDatabase,
   createCourse,
   createLesson,
   createLearningPlatform,
+  createUser,
   deleteCourse,
   deleteLesson,
+  deleteUser,
   fetchCourses,
   fetchLessons,
+  fetchUsers,
   updateCourse,
-  updateLesson
+  updateLesson,
+  updateUser
 } from "./api";
-import { Course, Lesson } from "./types";
+import { Course, Lesson, User } from "./types";
+
+const emptyUserForm = {
+  firstName: "",
+  lastName: "",
+  email: ""
+};
 
 const emptyCourseForm = {
   categoryId: "",
@@ -30,10 +40,12 @@ const emptyLessonForm = {
 };
 
 interface HomePageProps {
-  onNavigateSettings: () => void;
+  onNavigateSettings?: () => void;
 }
 
 export default function HomePage({ onNavigateSettings }: HomePageProps) {
+  const [users, setUsers] = useState<User[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
@@ -44,13 +56,64 @@ export default function HomePage({ onNavigateSettings }: HomePageProps) {
   );
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [userForm, setUserForm] = useState(emptyUserForm);
+  const [editingUserId, setEditingUserId] = useState<number | null>(null);
   const [courseForm, setCourseForm] = useState(emptyCourseForm);
   const [editingCourseId, setEditingCourseId] = useState<number | null>(null);
   const [lessonForm, setLessonForm] = useState(emptyLessonForm);
   const [editingLessonId, setEditingLessonId] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<"courses" | "lessons">(
-    "courses"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "users" | "courses" | "lessons"
+  >("courses");
+
+  const fakeFirstNames = [
+    "Ava",
+    "Noah",
+    "Maya",
+    "Leo",
+    "Zoe",
+    "Nina",
+    "Omar",
+    "Ezra"
+  ];
+  const fakeLastNames = [
+    "Singh",
+    "Chen",
+    "Lopez",
+    "Patel",
+    "Kim",
+    "Garcia",
+    "Nguyen",
+    "Brown"
+  ];
+  const fakeDomains = ["example.com", "mail.test", "demo.local"];
+
+  function generateFakeUser() {
+    const firstName =
+      fakeFirstNames[Math.floor(Math.random() * fakeFirstNames.length)];
+    const lastName =
+      fakeLastNames[Math.floor(Math.random() * fakeLastNames.length)];
+    const domain = fakeDomains[Math.floor(Math.random() * fakeDomains.length)];
+    const suffix = Math.floor(Math.random() * 900 + 100);
+    return {
+      firstName,
+      lastName,
+      email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${suffix}@${domain}`
+    };
+  }
+
+  async function loadUsers() {
+    setLoadingUsers(true);
+    setError(null);
+    try {
+      const data = await fetchUsers();
+      setUsers(data);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoadingUsers(false);
+    }
+  }
 
   async function loadCourses() {
     setLoadingCourses(true);
@@ -79,6 +142,7 @@ export default function HomePage({ onNavigateSettings }: HomePageProps) {
   }
 
   useEffect(() => {
+    loadUsers();
     loadCourses();
     loadLessons();
   }, []);
@@ -129,7 +193,62 @@ export default function HomePage({ onNavigateSettings }: HomePageProps) {
     }
   }
 
-  async function handleCourseSubmit(event: React.FormEvent) {
+  async function handleUserSubmit(event: FormEvent) {
+    event.preventDefault();
+    setNotice(null);
+    setError(null);
+    try {
+      if (editingUserId) {
+        await updateUser(editingUserId, userForm);
+        setNotice("User updated.");
+      } else {
+        await createUser(userForm);
+        setNotice("User created.");
+      }
+      setUserForm(emptyUserForm);
+      setEditingUserId(null);
+      await loadUsers();
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
+  function handleEditUser(user: User) {
+    setEditingUserId(user.id);
+    setUserForm({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email
+    });
+  }
+
+  function handleCancelUser() {
+    setEditingUserId(null);
+    setUserForm(emptyUserForm);
+  }
+
+  function handleFillFakeUser() {
+    const fakeUser = generateFakeUser();
+    setUserForm(fakeUser);
+    setEditingUserId(null);
+  }
+
+  async function handleDeleteUser(user: User) {
+    if (!confirm(`Delete ${user.firstName} ${user.lastName}?`)) {
+      return;
+    }
+    setError(null);
+    setNotice(null);
+    try {
+      await deleteUser(user.id);
+      setNotice("User deleted.");
+      await loadUsers();
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
+  async function handleCourseSubmit(event: FormEvent) {
     event.preventDefault();
     setNotice(null);
     setError(null);
@@ -197,7 +316,7 @@ export default function HomePage({ onNavigateSettings }: HomePageProps) {
     }
   }
 
-  async function handleLessonSubmit(event: React.FormEvent) {
+  async function handleLessonSubmit(event: FormEvent) {
     event.preventDefault();
     setNotice(null);
     setError(null);
@@ -280,18 +399,20 @@ export default function HomePage({ onNavigateSettings }: HomePageProps) {
           <p className="eyebrow">Node + MSSQL</p>
           <h1>Learning Platform</h1>
           <p className="subtitle">
-            Manage courses and lessons. Configure users in settings.
+            Manage users, courses, and lessons in one place.
           </p>
         </div>
         <div className="hero-actions">
-          <button
-            className="button icon-button"
-            onClick={onNavigateSettings}
-            title="Go to Settings"
-            aria-label="Settings"
-          >
-            ⚙️
-          </button>
+          {onNavigateSettings && (
+            <button
+              className="button icon-button"
+              onClick={onNavigateSettings}
+              title="Go to Settings"
+              aria-label="Settings"
+            >
+              ⚙️
+            </button>
+          )}
           <button className="button" onClick={handleCreateDb}>
             Create Database
           </button>
@@ -330,6 +451,15 @@ export default function HomePage({ onNavigateSettings }: HomePageProps) {
 
       <nav className="tabs" role="tablist" aria-label="Manage entities">
         <button
+          className={`tab ${activeTab === "users" ? "active" : ""}`}
+          onClick={() => setActiveTab("users")}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "users"}
+        >
+          Users
+        </button>
+        <button
           className={`tab ${activeTab === "courses" ? "active" : ""}`}
           onClick={() => setActiveTab("courses")}
           type="button"
@@ -348,6 +478,117 @@ export default function HomePage({ onNavigateSettings }: HomePageProps) {
           Lessons
         </button>
       </nav>
+
+      {activeTab === "users" && (
+        <section className="split-panel" role="tabpanel">
+          <div className="panel form-panel">
+            <h2>{editingUserId ? "Edit user" : "Add a user"}</h2>
+            <form className="form form-compact" onSubmit={handleUserSubmit}>
+              <label>
+                First name
+                <input
+                  value={userForm.firstName}
+                  onChange={(event) =>
+                    setUserForm({ ...userForm, firstName: event.target.value })
+                  }
+                  placeholder="Ada"
+                  required
+                />
+              </label>
+              <label>
+                Last name
+                <input
+                  value={userForm.lastName}
+                  onChange={(event) =>
+                    setUserForm({ ...userForm, lastName: event.target.value })
+                  }
+                  placeholder="Lovelace"
+                  required
+                />
+              </label>
+              <label>
+                Email
+                <input
+                  type="email"
+                  value={userForm.email}
+                  onChange={(event) =>
+                    setUserForm({ ...userForm, email: event.target.value })
+                  }
+                  placeholder="ada@example.com"
+                  required
+                />
+              </label>
+              <div className="form-actions">
+                <button className="button" type="submit">
+                  {editingUserId ? "Save changes" : "Create user"}
+                </button>
+                {!editingUserId && (
+                  <button
+                    className="button ghost"
+                    type="button"
+                    onClick={handleFillFakeUser}
+                  >
+                    Fake data
+                  </button>
+                )}
+                {editingUserId && (
+                  <button
+                    className="button ghost"
+                    type="button"
+                    onClick={handleCancelUser}
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+
+          <div className="panel table-panel">
+            <div className="table-header">
+              <h2>Users</h2>
+              <span className="count">{users.length} total</span>
+            </div>
+
+            {loadingUsers ? (
+              <p className="muted">Loading users...</p>
+            ) : users.length === 0 ? (
+              <p className="muted">No users yet. Create one on the left.</p>
+            ) : (
+              <div className="table">
+                <div className="table-row table-head">
+                  <span>Name</span>
+                  <span>Email</span>
+                  <span>Created</span>
+                  <span></span>
+                </div>
+                {users.map((user) => (
+                  <div className="table-row" key={user.id}>
+                    <div>
+                      <strong>
+                        {user.firstName} {user.lastName}
+                      </strong>
+                    </div>
+                    <div>{user.email}</div>
+                    <div>{new Date(user.createdAt).toLocaleDateString()}</div>
+                    <div className="row-actions">
+                      <button className="link" onClick={() => handleEditUser(user)}>
+                        Edit
+                      </button>
+                      <button
+                        className="link danger"
+                        onClick={() => handleDeleteUser(user)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {activeTab === "courses" && (
         <section className="split-panel" role="tabpanel">
