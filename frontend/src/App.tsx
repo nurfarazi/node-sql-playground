@@ -59,6 +59,9 @@ export default function App() {
   const [editingCourseId, setEditingCourseId] = useState<number | null>(null);
   const [lessonForm, setLessonForm] = useState(emptyLessonForm);
   const [editingLessonId, setEditingLessonId] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<"users" | "courses" | "lessons">(
+    "users"
+  );
 
   async function loadUsers() {
     setLoading(true);
@@ -367,6 +370,26 @@ export default function App() {
         </div>
       </header>
 
+      <section className="status-strip">
+        <div className="status-block">
+          <span className="status-chip">DB</span>
+          <div>
+            <p className="status-title">Database status</p>
+            <p className="status-meta">Uses DB_DATABASE from backend config</p>
+          </div>
+          <span className={`pill ${statusClass}`}>{statusLabel}</span>
+        </div>
+        <div className="status-actions">
+          <button
+            className="button ghost"
+            onClick={handleCheckDb}
+            disabled={checkingDb}
+          >
+            {checkingDb ? "Checking..." : "Check Database"}
+          </button>
+        </div>
+      </section>
+
       {(error || notice) && (
         <div className="alerts">
           {error && <div className="alert error">{error}</div>}
@@ -374,333 +397,373 @@ export default function App() {
         </div>
       )}
 
-      <section className="panel">
-        <h2>{editingId ? "Edit user" : "Add a new user"}</h2>
-        <form className="form" onSubmit={handleSubmit}>
-          <label>
-            First name
-            <input
-              value={form.firstName}
-              onChange={(event) => setForm({ ...form, firstName: event.target.value })}
-              placeholder="Ada"
-              required
-            />
-          </label>
-          <label>
-            Last name
-            <input
-              value={form.lastName}
-              onChange={(event) => setForm({ ...form, lastName: event.target.value })}
-              placeholder="Lovelace"
-              required
-            />
-          </label>
-          <label>
-            Email
-            <input
-              type="email"
-              value={form.email}
-              onChange={(event) => setForm({ ...form, email: event.target.value })}
-              placeholder="ada@example.com"
-              required
-            />
-          </label>
-          <div className="form-actions">
-            <button className="button" type="submit">
-              {editingId ? "Save changes" : "Create user"}
-            </button>
-            {editingId && (
-              <button className="button ghost" type="button" onClick={handleCancel}>
-                Cancel
-              </button>
+      <nav className="tabs" role="tablist" aria-label="Manage entities">
+        <button
+          className={`tab ${activeTab === "users" ? "active" : ""}`}
+          onClick={() => setActiveTab("users")}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "users"}
+        >
+          Users
+        </button>
+        <button
+          className={`tab ${activeTab === "courses" ? "active" : ""}`}
+          onClick={() => setActiveTab("courses")}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "courses"}
+        >
+          Courses
+        </button>
+        <button
+          className={`tab ${activeTab === "lessons" ? "active" : ""}`}
+          onClick={() => setActiveTab("lessons")}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "lessons"}
+        >
+          Lessons
+        </button>
+      </nav>
+
+      {activeTab === "users" && (
+        <section className="split-panel" role="tabpanel">
+          <div className="panel form-panel">
+            <h2>{editingId ? "Edit user" : "Add a new user"}</h2>
+            <form className="form form-compact" onSubmit={handleSubmit}>
+              <label>
+                First name
+                <input
+                  value={form.firstName}
+                  onChange={(event) =>
+                    setForm({ ...form, firstName: event.target.value })
+                  }
+                  placeholder="Ada"
+                  required
+                />
+              </label>
+              <label>
+                Last name
+                <input
+                  value={form.lastName}
+                  onChange={(event) =>
+                    setForm({ ...form, lastName: event.target.value })
+                  }
+                  placeholder="Lovelace"
+                  required
+                />
+              </label>
+              <label>
+                Email
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(event) =>
+                    setForm({ ...form, email: event.target.value })
+                  }
+                  placeholder="ada@example.com"
+                  required
+                />
+              </label>
+              <div className="form-actions">
+                <button className="button" type="submit">
+                  {editingId ? "Save changes" : "Create user"}
+                </button>
+                {editingId && (
+                  <button className="button ghost" type="button" onClick={handleCancel}>
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+
+          <div className="panel table-panel">
+            <div className="table-header">
+              <h2>Users</h2>
+              <span className="count">{users.length} total</span>
+            </div>
+
+            {loading ? (
+              <p className="muted">Loading users...</p>
+            ) : users.length === 0 ? (
+              <p className="muted">No users yet. Create one on the left.</p>
+            ) : (
+              <div className="table">
+                <div className="table-row table-head">
+                  <span>Name</span>
+                  <span>Email</span>
+                  <span>Created</span>
+                  <span></span>
+                </div>
+                {users.map((user) => (
+                  <div className="table-row" key={user.id}>
+                    <div>
+                      <strong>
+                        {user.firstName} {user.lastName}
+                      </strong>
+                    </div>
+                    <div>{user.email}</div>
+                    <div>{new Date(user.createdAt).toLocaleDateString()}</div>
+                    <div className="row-actions">
+                      <button className="link" onClick={() => handleEdit(user)}>
+                        Edit
+                      </button>
+                      <button className="link danger" onClick={() => handleDelete(user)}>
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
-        </form>
-      </section>
+        </section>
+      )}
 
-      <section className="panel panel-stack">
-        <div className="table-header">
-          <div>
-            <p className="eyebrow">Learning</p>
+      {activeTab === "courses" && (
+        <section className="split-panel" role="tabpanel">
+          <div className="panel form-panel">
             <h2>{editingCourseId ? "Edit course" : "Add a course"}</h2>
+            <form className="form form-compact" onSubmit={handleCourseSubmit}>
+              <label>
+                Category id
+                <input
+                  type="number"
+                  min="1"
+                  value={courseForm.categoryId}
+                  onChange={(event) =>
+                    setCourseForm({ ...courseForm, categoryId: event.target.value })
+                  }
+                  placeholder="1"
+                  required
+                />
+              </label>
+              <label>
+                Title
+                <input
+                  value={courseForm.title}
+                  onChange={(event) =>
+                    setCourseForm({ ...courseForm, title: event.target.value })
+                  }
+                  placeholder="Intro to SQL"
+                  required
+                />
+              </label>
+              <label>
+                Level
+                <input
+                  value={courseForm.level}
+                  onChange={(event) =>
+                    setCourseForm({ ...courseForm, level: event.target.value })
+                  }
+                  placeholder="Beginner"
+                />
+              </label>
+              <label className="field-span-3">
+                Description
+                <textarea
+                  value={courseForm.description}
+                  onChange={(event) =>
+                    setCourseForm({ ...courseForm, description: event.target.value })
+                  }
+                  placeholder="Short summary of the course focus."
+                  rows={3}
+                />
+              </label>
+              <label>
+                Status
+                <select
+                  value={courseForm.status}
+                  onChange={(event) =>
+                    setCourseForm({ ...courseForm, status: event.target.value })
+                  }
+                >
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                  <option value="archived">Archived</option>
+                </select>
+              </label>
+              <div className="form-actions">
+                <button className="button" type="submit">
+                  {editingCourseId ? "Save course" : "Create course"}
+                </button>
+                {editingCourseId && (
+                  <button
+                    className="button ghost"
+                    type="button"
+                    onClick={handleCancelCourse}
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </form>
           </div>
-          <span className="count">{courses.length} total</span>
-        </div>
 
-        <form className="form" onSubmit={handleCourseSubmit}>
-          <label>
-            Category id
-            <input
-              type="number"
-              min="1"
-              value={courseForm.categoryId}
-              onChange={(event) =>
-                setCourseForm({ ...courseForm, categoryId: event.target.value })
-              }
-              placeholder="1"
-              required
-            />
-          </label>
-          <label>
-            Title
-            <input
-              value={courseForm.title}
-              onChange={(event) =>
-                setCourseForm({ ...courseForm, title: event.target.value })
-              }
-              placeholder="Intro to SQL"
-              required
-            />
-          </label>
-          <label>
-            Level
-            <input
-              value={courseForm.level}
-              onChange={(event) =>
-                setCourseForm({ ...courseForm, level: event.target.value })
-              }
-              placeholder="Beginner"
-            />
-          </label>
-          <label className="field-span-3">
-            Description
-            <textarea
-              value={courseForm.description}
-              onChange={(event) =>
-                setCourseForm({ ...courseForm, description: event.target.value })
-              }
-              placeholder="Short summary of the course focus."
-              rows={3}
-            />
-          </label>
-          <label>
-            Status
-            <select
-              value={courseForm.status}
-              onChange={(event) =>
-                setCourseForm({ ...courseForm, status: event.target.value })
-              }
-            >
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
-              <option value="archived">Archived</option>
-            </select>
-          </label>
-          <div className="form-actions">
-            <button className="button" type="submit">
-              {editingCourseId ? "Save course" : "Create course"}
-            </button>
-            {editingCourseId && (
-              <button className="button ghost" type="button" onClick={handleCancelCourse}>
-                Cancel
-              </button>
+          <div className="panel table-panel">
+            <div className="table-header">
+              <h2>Courses</h2>
+              <span className="count">{courses.length} total</span>
+            </div>
+
+            {loadingCourses ? (
+              <p className="muted">Loading courses...</p>
+            ) : courses.length === 0 ? (
+              <p className="muted">No courses yet. Create one on the left.</p>
+            ) : (
+              <div className="table">
+                <div className="table-row table-head courses-row">
+                  <span>Title</span>
+                  <span>Category</span>
+                  <span>Status</span>
+                  <span>Level</span>
+                  <span>Created</span>
+                  <span></span>
+                </div>
+                {courses.map((course) => (
+                  <div className="table-row courses-row" key={course.id}>
+                    <div>
+                      <strong>{course.title}</strong>
+                    </div>
+                    <div>{course.categoryId}</div>
+                    <div>{course.status}</div>
+                    <div>{course.level ?? "—"}</div>
+                    <div>{new Date(course.createdAt).toLocaleDateString()}</div>
+                    <div className="row-actions">
+                      <button className="link" onClick={() => handleEditCourse(course)}>
+                        Edit
+                      </button>
+                      <button
+                        className="link danger"
+                        onClick={() => handleDeleteCourse(course)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
-        </form>
+        </section>
+      )}
 
-        {loadingCourses ? (
-          <p className="muted">Loading courses...</p>
-        ) : courses.length === 0 ? (
-          <p className="muted">No courses yet. Create one above.</p>
-        ) : (
-          <div className="table">
-            <div className="table-row table-head courses-row">
-              <span>Title</span>
-              <span>Category</span>
-              <span>Status</span>
-              <span>Level</span>
-              <span>Created</span>
-              <span></span>
-            </div>
-            {courses.map((course) => (
-              <div className="table-row courses-row" key={course.id}>
-                <div>
-                  <strong>{course.title}</strong>
-                </div>
-                <div>{course.categoryId}</div>
-                <div>{course.status}</div>
-                <div>{course.level ?? "—"}</div>
-                <div>{new Date(course.createdAt).toLocaleDateString()}</div>
-                <div className="row-actions">
-                  <button className="link" onClick={() => handleEditCourse(course)}>
-                    Edit
-                  </button>
-                  <button className="link danger" onClick={() => handleDeleteCourse(course)}>
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section className="panel panel-stack">
-        <div className="table-header">
-          <div>
-            <p className="eyebrow">Learning</p>
+      {activeTab === "lessons" && (
+        <section className="split-panel" role="tabpanel">
+          <div className="panel form-panel">
             <h2>{editingLessonId ? "Edit lesson" : "Add a lesson"}</h2>
+            <form className="form form-compact" onSubmit={handleLessonSubmit}>
+              <label>
+                Course id
+                <input
+                  type="number"
+                  min="1"
+                  value={lessonForm.courseId}
+                  onChange={(event) =>
+                    setLessonForm({ ...lessonForm, courseId: event.target.value })
+                  }
+                  placeholder="1"
+                  required
+                />
+              </label>
+              <label>
+                Title
+                <input
+                  value={lessonForm.title}
+                  onChange={(event) =>
+                    setLessonForm({ ...lessonForm, title: event.target.value })
+                  }
+                  placeholder="Lesson title"
+                  required
+                />
+              </label>
+              <label>
+                Position
+                <input
+                  type="number"
+                  min="1"
+                  value={lessonForm.position}
+                  onChange={(event) =>
+                    setLessonForm({ ...lessonForm, position: event.target.value })
+                  }
+                  placeholder="1"
+                />
+              </label>
+              <label className="field-span-3">
+                Content
+                <textarea
+                  value={lessonForm.content}
+                  onChange={(event) =>
+                    setLessonForm({ ...lessonForm, content: event.target.value })
+                  }
+                  placeholder="Lesson content or outline."
+                  rows={3}
+                />
+              </label>
+              <div className="form-actions">
+                <button className="button" type="submit">
+                  {editingLessonId ? "Save lesson" : "Create lesson"}
+                </button>
+                {editingLessonId && (
+                  <button
+                    className="button ghost"
+                    type="button"
+                    onClick={handleCancelLesson}
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </form>
           </div>
-          <span className="count">{lessons.length} total</span>
-        </div>
 
-        <form className="form" onSubmit={handleLessonSubmit}>
-          <label>
-            Course id
-            <input
-              type="number"
-              min="1"
-              value={lessonForm.courseId}
-              onChange={(event) =>
-                setLessonForm({ ...lessonForm, courseId: event.target.value })
-              }
-              placeholder="1"
-              required
-            />
-          </label>
-          <label>
-            Title
-            <input
-              value={lessonForm.title}
-              onChange={(event) =>
-                setLessonForm({ ...lessonForm, title: event.target.value })
-              }
-              placeholder="Lesson title"
-              required
-            />
-          </label>
-          <label>
-            Position
-            <input
-              type="number"
-              min="1"
-              value={lessonForm.position}
-              onChange={(event) =>
-                setLessonForm({ ...lessonForm, position: event.target.value })
-              }
-              placeholder="1"
-            />
-          </label>
-          <label className="field-span-3">
-            Content
-            <textarea
-              value={lessonForm.content}
-              onChange={(event) =>
-                setLessonForm({ ...lessonForm, content: event.target.value })
-              }
-              placeholder="Lesson content or outline."
-              rows={3}
-            />
-          </label>
-          <div className="form-actions">
-            <button className="button" type="submit">
-              {editingLessonId ? "Save lesson" : "Create lesson"}
-            </button>
-            {editingLessonId && (
-              <button className="button ghost" type="button" onClick={handleCancelLesson}>
-                Cancel
-              </button>
+          <div className="panel table-panel">
+            <div className="table-header">
+              <h2>Lessons</h2>
+              <span className="count">{lessons.length} total</span>
+            </div>
+
+            {loadingLessons ? (
+              <p className="muted">Loading lessons...</p>
+            ) : lessons.length === 0 ? (
+              <p className="muted">No lessons yet. Create one on the left.</p>
+            ) : (
+              <div className="table">
+                <div className="table-row table-head lessons-row">
+                  <span>Title</span>
+                  <span>Course</span>
+                  <span>Position</span>
+                  <span>Created</span>
+                  <span></span>
+                </div>
+                {lessons.map((lesson) => (
+                  <div className="table-row lessons-row" key={lesson.id}>
+                    <div>
+                      <strong>{lesson.title}</strong>
+                    </div>
+                    <div>{lesson.courseId}</div>
+                    <div>{lesson.position}</div>
+                    <div>{new Date(lesson.createdAt).toLocaleDateString()}</div>
+                    <div className="row-actions">
+                      <button className="link" onClick={() => handleEditLesson(lesson)}>
+                        Edit
+                      </button>
+                      <button
+                        className="link danger"
+                        onClick={() => handleDeleteLesson(lesson)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
-        </form>
-
-        {loadingLessons ? (
-          <p className="muted">Loading lessons...</p>
-        ) : lessons.length === 0 ? (
-          <p className="muted">No lessons yet. Create one above.</p>
-        ) : (
-          <div className="table">
-            <div className="table-row table-head lessons-row">
-              <span>Title</span>
-              <span>Course</span>
-              <span>Position</span>
-              <span>Created</span>
-              <span></span>
-            </div>
-            {lessons.map((lesson) => (
-              <div className="table-row lessons-row" key={lesson.id}>
-                <div>
-                  <strong>{lesson.title}</strong>
-                </div>
-                <div>{lesson.courseId}</div>
-                <div>{lesson.position}</div>
-                <div>{new Date(lesson.createdAt).toLocaleDateString()}</div>
-                <div className="row-actions">
-                  <button className="link" onClick={() => handleEditLesson(lesson)}>
-                    Edit
-                  </button>
-                  <button className="link danger" onClick={() => handleDeleteLesson(lesson)}>
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section className="panel table-panel">
-        <div className="table-header">
-          <h2>Users</h2>
-          <span className="count">{users.length} total</span>
-        </div>
-
-        {loading ? (
-          <p className="muted">Loading users...</p>
-        ) : users.length === 0 ? (
-          <p className="muted">No users yet. Create one above.</p>
-        ) : (
-          <div className="table">
-            <div className="table-row table-head">
-              <span>Name</span>
-              <span>Email</span>
-              <span>Created</span>
-              <span></span>
-            </div>
-            {users.map((user) => (
-              <div className="table-row" key={user.id}>
-                <div>
-                  <strong>
-                    {user.firstName} {user.lastName}
-                  </strong>
-                </div>
-                <div>{user.email}</div>
-                <div>{new Date(user.createdAt).toLocaleString()}</div>
-                <div className="row-actions">
-                  <button className="link" onClick={() => handleEdit(user)}>
-                    Edit
-                  </button>
-                  <button className="link danger" onClick={() => handleDelete(user)}>
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <footer className="status-bar">
-        <div className="status-bar-inner">
-          <div className="status-block">
-            <span className="status-chip">DB</span>
-            <div>
-              <p className="status-title">Database status</p>
-              <p className="status-meta">Uses DB_DATABASE from backend config</p>
-            </div>
-            <span className={`pill ${statusClass}`}>{statusLabel}</span>
-          </div>
-          <div className="status-actions">
-            <button
-              className="button ghost"
-              onClick={handleCheckDb}
-              disabled={checkingDb}
-            >
-              {checkingDb ? "Checking..." : "Check Database"}
-            </button>
-          </div>
-        </div>
-      </footer>
+        </section>
+      )}
     </div>
   );
 }
